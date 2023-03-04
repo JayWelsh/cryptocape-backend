@@ -58,57 +58,70 @@ const setBaseAssetBalance = async (
   }
 }
 
+let maxRetries = 5;
+
 const getAndSetBaseAssetBalance = async (
   account: string,
   network: string,
+  retryCount: number = 0,
 ) => {
-  let baseAssetSymbol = baseAssetIdToSymbol[network];
-  if(['ethereum', 'optimism', 'arbitrum'].indexOf(network) > -1) {
-    let url;
-    if(network === 'ethereum') {
-      url = `https://api.etherscan.io/api?module=account&action=balance&address=${account}&tag=latest&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE`;
-    }
-    if(network === 'optimism') {
-      url = `https://api-optimistic.etherscan.io/api?module=account&action=balance&address=${account}&tag=latest`;
-    }
-    if(network === 'arbitrum') {
-      url = `https://api.arbiscan.io/api?module=account&action=balance&address=${account}&tag=latest`;
-    }
-    if(url) {
-      if(debugMode) {
-        console.log(`Fetching base asset balance of ${account} on ${network}`);
-        console.log(`Using URL: ${url}`);
+  try {
+    let baseAssetSymbol = baseAssetIdToSymbol[network];
+    if(['ethereum', 'optimism', 'arbitrum'].indexOf(network) > -1) {
+      let url;
+      if(network === 'ethereum') {
+        url = `https://api.etherscan.io/api?module=account&action=balance&address=${account}&tag=latest&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE`;
       }
-      let response = await axios.get(
-        url,
-        {
-          headers: { "Accept-Encoding": "gzip,deflate,compress" }
+      if(network === 'optimism') {
+        url = `https://api-optimistic.etherscan.io/api?module=account&action=balance&address=${account}&tag=latest`;
+      }
+      if(network === 'arbitrum') {
+        url = `https://api.arbiscan.io/api?module=account&action=balance&address=${account}&tag=latest`;
+      }
+      if(url) {
+        if(debugMode) {
+          console.log(`Fetching base asset balance of ${account} on ${network}`);
+          console.log(`Using URL: ${url}`);
         }
-      );
-      let balance = response?.data?.result;
-      // TODO, ENABLE ARBI
-      if(network !== 'arbitrum') {
-        await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
+        let response = await axios.get(
+          url,
+          {
+            headers: { "Accept-Encoding": "gzip,deflate,compress" }
+          }
+        );
+        let balance = response?.data?.result;
+        // TODO, ENABLE ARBI
+        if(network !== 'arbitrum') {
+          await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
+        }
+        return balance;
+      } else {
+        return "0";
       }
-      return balance;
     } else {
-      return "0";
+      if(network === 'canto') {
+        let url = "https://evm.explorer.canto.io/api/eth-rpc";
+        let payload = {
+          "id":0,
+          "jsonrpc":"2.0",
+          "method":"eth_getBalance",
+          "params":[account,"latest"]
+        };
+        let response = await axios.post(url, payload, {
+          headers: { "Accept-Encoding": "gzip,deflate,compress" }
+        });
+        let balanceBN = new BigNumber(response?.data?.result);
+        let balance = (response?.data?.result && !balanceBN.isNaN()) ? balanceBN.toString() : "0";
+        await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
+        return balance;
+      }
     }
-  } else {
-    if(network === 'canto') {
-      let url = "https://evm.explorer.canto.io/api/eth-rpc";
-      let payload = {
-        "id":0,
-        "jsonrpc":"2.0",
-        "method":"eth_getBalance",
-        "params":[account,"latest"]
-      };
-      let response = await axios.post(url, payload, {
-        headers: { "Accept-Encoding": "gzip,deflate,compress" }
-      });
-      let balance = new BigNumber(response?.data?.result).toString()
-      await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
-      return balance;
+  } catch (e) {
+    retryCount++;
+    console.log(`Error fetching base assets for ${account} on ${network}, retryCount: ${retryCount}, error: ${e}`);
+    if(retryCount <= maxRetries) {
+      let response : string = await getAndSetBaseAssetBalance(account, network, retryCount);
+      return response ? response.toString() : "0";
     }
   }
   return "0"

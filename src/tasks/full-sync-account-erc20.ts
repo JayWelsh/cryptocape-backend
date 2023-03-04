@@ -37,6 +37,8 @@ interface ITokenAddressToBalance {
   [key: string]: IBalanceEntry
 }
 
+let maxRetries = 5;
+
 const getAllAccountTransactionsERC20 = async (
   account: string,
   network: string,
@@ -44,40 +46,51 @@ const getAllAccountTransactionsERC20 = async (
   page: number = 1,
   offset: number = pageSize,
   results: IEtherscanTxERC20[] = [],
+  retryCount: number = 0,
 ) => {
-  let url;
-  if(network === 'ethereum') {
-    url = `https://api.etherscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&offset=${offset}&startblock=${startBlock}&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE`;
-  }
-  if(network === 'optimism') {
-    url = `https://api-optimistic.etherscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&startblock=${startBlock}&offset=${offset}`;
-  }
-  if(network === 'arbitrum') {
-    url = `https://api.arbiscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&startblock=${startBlock}&offset=${offset}`;
-  }
-  if(url) {
-    if(debugMode) {
-      console.log(`Fetching page ${page} of ${account} ERC-20 txs on ${network}`);
-      console.log(`Using URL: ${url}`);
+  try {
+    let url;
+    if(network === 'ethereum') {
+      url = `https://api.etherscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&offset=${offset}&startblock=${startBlock}&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE`;
     }
-    let response = await axios.get(
-      url,
-      {
-        headers: { "Accept-Encoding": "gzip,deflate,compress" }
-      }
-    );
-    let message = response?.data?.message;
-    let data = response?.data?.result;
-    let additionalResults: IEtherscanTxERC20[] = [];
-    if(data.length > 0) {
-      if(data.length === pageSize) {
-        additionalResults = await getAllAccountTransactionsERC20(account, network, startBlock, page + 1, pageSize, results);
-      }
+    if(network === 'optimism') {
+      url = `https://api-optimistic.etherscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&startblock=${startBlock}&offset=${offset}`;
     }
-    return [...data, ...additionalResults];
-  } else {
-    return [];
+    if(network === 'arbitrum') {
+      url = `https://api.arbiscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&startblock=${startBlock}&offset=${offset}`;
+    }
+    if(url) {
+      if(debugMode) {
+        console.log(`Fetching page ${page} of ${account} ERC-20 txs on ${network}`);
+        console.log(`Using URL: ${url}`);
+      }
+      let response = await axios.get(
+        url,
+        {
+          headers: { "Accept-Encoding": "gzip,deflate,compress" }
+        }
+      );
+      let message = response?.data?.message;
+      let data = response?.data?.result;
+      let additionalResults: IEtherscanTxERC20[] = [];
+      if(data.length > 0) {
+        if(data.length === pageSize) {
+          additionalResults = await getAllAccountTransactionsERC20(account, network, startBlock, page + 1, pageSize, results, retryCount);
+        }
+      }
+      return [...data, ...additionalResults];
+    } else {
+      return [];
+    }
+  } catch (e) {
+    retryCount++;
+    console.log(`Error fetching ERC20 txs for ${account} on ${network}, retryCount: ${retryCount}, error: ${e}`);
+    if(retryCount <= maxRetries) {
+      let response: IEtherscanTxERC20[] = await getAllAccountTransactionsERC20(account, network, startBlock, page, pageSize, results, retryCount);
+      return response ? response : [];
+    }
   }
+  return [];
 }
 
 const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC20[], account: string, network: string) => {
