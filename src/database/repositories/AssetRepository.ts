@@ -1,0 +1,60 @@
+import { AssetModel } from "../models";
+import BaseRepository from "./BaseRepository";
+import { QueryBuilder } from "objection";
+import Pagination, { IPaginationRequest } from "../../utils/Pagination";
+
+class AssetRepository extends BaseRepository {
+    getModel() {
+      return AssetModel
+    }
+
+    async getAssetByAddress(assetAddress: string) {
+      const result = await this.model.query().where(function (this: QueryBuilder<AssetModel>) {
+        this.where('address', assetAddress);
+      }).first();
+
+      return this.parserResult(result);
+    }
+
+    async getAssetByAddressAndNetwork(assetAddress: string, network: string) {
+      const result = await this.model.query().where(function (this: QueryBuilder<AssetModel>) {
+        this.where('address', assetAddress);
+        this.where('network_name', network);
+      }).first();
+
+      return this.parserResult(result);
+    }
+
+    async getBaseAssetByNetwork(networkName: string) {
+      const result = await this.model.query().where(function (this: QueryBuilder<AssetModel>) {
+        this.where('network_name', networkName);
+        this.where('is_base_asset', true);
+      })
+
+      return this.parserResult(result);
+    }
+
+    async getNonBaseAssetByNetwork(networkName: string) {
+      const result = await this.model.query().where(function (this: QueryBuilder<AssetModel>) {
+        this.where('network_name', networkName);
+        this.where('is_base_asset', false);
+      })
+
+      return this.parserResult(result);
+    }
+
+    async getAssets(pagination: IPaginationRequest) {
+
+      const { perPage, page } = pagination;
+
+      const results = await this.model.query().page(page - 1, perPage);
+      
+      return this.parserResult(new Pagination(results, perPage, page))
+    }
+
+    async updateLastPriceOfAsset(assetAddress: string, lastPrice: string) {
+      await this.model.query().update({last_price_usd: lastPrice}).where("address", assetAddress);
+    }
+}
+
+export default new AssetRepository()

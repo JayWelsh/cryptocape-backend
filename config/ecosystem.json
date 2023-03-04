@@ -1,0 +1,12 @@
+{
+  "apps": [
+    {
+      "name": "cryptocape-backend",
+      "script": "./dist/app.js",
+      "cwd": "/home/deployer/cryptocape/cryptocape-backend",
+      "error_file": "/home/deployer/cryptocape-logs/server.err.log",
+      "out_file": "/home/deployer/cryptocape-logs/server.out.log",
+      "exec_mode": "cluster"
+    }
+  ]
+}
