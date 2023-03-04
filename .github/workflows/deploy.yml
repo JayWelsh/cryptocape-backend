@@ -1,0 +1,49 @@
+name: Deploy to DigitalOcean Droplet
+'on':
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          passphrase: ${{secrets.KEY_PASSPHRASE}}
+          script: whoami
+      # - name: Deploy to DigitalOcean Droplet
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{secrets.HOST}}
+      #     username: ${{secrets.USERNAME}}
+      #     passphrase: ${{secrets.KEY_PASSPHRASE}}
+      #     key: ${{secrets.KEY}}
+      #     script: |
+      #       export NVM_DIR=~/.nvm
+      #       source ~/.nvm/nvm.sh
+      #       rm -rf cryptocape
+      #       mkdir cryptocape
+      #       cd cryptocape
+      #       git clone https://github.com/JayWelsh/cryptocape-backend.git
+      #       cd cryptocape-backend
+      #       npm i -g dotenv
+      #       npm i -g pm2
+      #       yarn install
+      #       touch .env
+      #       echo DB_HOST=\"'${{secrets.DB_HOST}}'\" >> .env
+      #       echo DB_PORT=\"'${{secrets.DB_PORT}}'\" >> .env
+      #       echo DB_NAME=\"'${{secrets.DB_NAME}}'\" >> .env
+      #       echo DB_USER=\"'${{secrets.DB_USER}}'\" >> .env
+      #       echo DB_PASS=\"'${{secrets.DB_PASS}}'\" >> .env
+      #       echo ALCHEMY_API_KEY_ETHEREUM=\"'${{secrets.ALCHEMY_API_KEY_ETHEREUM}}'\" >> .env
+      #       echo ALCHEMY_API_KEY_OPTIMISM=\"'${{secrets.ALCHEMY_API_KEY_OPTIMISM}}'\" >> .env
+      #       echo ALCHEMY_API_KEY_ARBITRUM=\"'${{secrets.ALCHEMY_API_KEY_ARBITRUM}}'\" >> .env
+      #       yarn run build
+      #       yarn run knex migrate:latest
+      #       pm2 startOrReload ./config/ecosystem.json
+      #       echo 'Deployment to digital ocean finished'
