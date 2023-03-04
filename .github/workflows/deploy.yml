@@ -23,6 +23,7 @@ jobs:
             cd cryptocape
             git clone https://github.com/JayWelsh/cryptocape-backend.git
             cd cryptocape-backend
+            npm i -g yarn
             npm i -g dotenv
             npm i -g pm2
             yarn install
