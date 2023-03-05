@@ -28,6 +28,9 @@ export const getCombinedValueBreakdownOfAccounts = async (addressesArray: string
       let {
         decimals,
         last_price_usd,
+        market_cap_usd,
+        volume_24hr_usd,
+        change_24hr_usd_percent,
         symbol,
       } = asset;
       if(new BigNumber(last_price_usd).isGreaterThan(0)) {
@@ -44,6 +47,9 @@ export const getCombinedValueBreakdownOfAccounts = async (addressesArray: string
               symbol: symbol,
               token_price: last_price_usd,
               percentage_of_total: "",
+              market_cap_usd,
+              volume_24hr_usd,
+              change_24hr_usd_percent,
             };
           }
         }

@@ -55,6 +55,18 @@ class AssetRepository extends BaseRepository {
     async updateLastPriceOfAsset(assetAddress: string, lastPrice: string) {
       await this.model.query().update({last_price_usd: lastPrice}).where("address", assetAddress);
     }
+
+    async update24HrVolumeOfAsset(assetAddress: string, volume: string) {
+      await this.model.query().update({volume_24hr_usd: volume}).where("address", assetAddress);
+    }
+
+    async updateMarketCapOfAsset(assetAddress: string, marketCap: string) {
+      await this.model.query().update({market_cap_usd: marketCap}).where("address", assetAddress);
+    }
+
+    async update24HrChangePercentOfAsset(assetAddress: string, changePercent: string) {
+      await this.model.query().update({change_24hr_usd_percent: changePercent}).where("address", assetAddress);
+    }
 }
 
 export default new AssetRepository()

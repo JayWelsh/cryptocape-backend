@@ -19,11 +19,11 @@ import {
 const coingeckoRetryMax = 3;
 
 export const fetchBaseAssetCoingeckoPrices = async (assetAddressesQueryString : string, retryCount: number = 0) => {
-  let url = `https://pro-api.coingecko.com/api/v3/simple/price?ids=${assetAddressesQueryString}&vs_currencies=usd&x_cg_pro_api_key=${COINGECKO_API_KEY}`;
+  let url = `https://pro-api.coingecko.com/api/v3/simple/price?ids=${assetAddressesQueryString}&vs_currencies=usd&x_cg_pro_api_key=${COINGECKO_API_KEY}&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true`;
   if (debugMode) {
     console.log({url})
   }
-  let results : {[key: string]: {usd: number}} = await axios.get(
+  let results : {[key: string]: ICoingeckoAssetPriceEntry} = await axios.get(
     url,
     {
       headers: { "Accept-Encoding": "gzip,deflate,compress" }
@@ -52,7 +52,7 @@ export const fetchBaseAssetCoingeckoPrices = async (assetAddressesQueryString : 
 
 export const fetchCoingeckoPrices = async (assetAddressesQueryString : string, network: string, retryCount = 0) => {
   let results : ICoingeckoAssetPriceEntry[] = await axios.get(
-    `https://pro-api.coingecko.com/api/v3/simple/token_price/${network}?contract_addresses=${assetAddressesQueryString}&vs_currencies=USD&x_cg_pro_api_key=${COINGECKO_API_KEY}`,
+    `https://pro-api.coingecko.com/api/v3/simple/token_price/${network}?contract_addresses=${assetAddressesQueryString}&vs_currencies=USD&x_cg_pro_api_key=${COINGECKO_API_KEY}&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true`,
     {
       headers: { "Accept-Encoding": "gzip,deflate,compress" }
     }
@@ -72,17 +72,18 @@ export const fetchCoingeckoPrices = async (assetAddressesQueryString : string, n
     }
     return {};
   })
-  let assetAddressToCoingeckoUsdPrice : ITokenAddressToLastPrice = {}
+  let assetAddressToCoingeckoUsdPriceInfo : ITokenAddressToLastPrice = {}
   let iterable = Object.entries(results);
   if(iterable.length > 0) {
     for(let assetAddressToPrice of iterable) {
       let checksumAssetAddress = utils.getAddress(assetAddressToPrice[0]);
-      if(assetAddressToPrice[1].usd) {
-        assetAddressToCoingeckoUsdPrice[checksumAssetAddress] = new BigNumber(assetAddressToPrice[1].usd).toString();
-      } else {
-        assetAddressToCoingeckoUsdPrice[checksumAssetAddress] = new BigNumber(0).toString();
+      assetAddressToCoingeckoUsdPriceInfo[checksumAssetAddress] = {
+        usd: assetAddressToPrice[1].usd ? new BigNumber(assetAddressToPrice[1].usd).toString() : new BigNumber(0).toString(),
+        usd_market_cap: assetAddressToPrice[1].usd_market_cap ? new BigNumber(assetAddressToPrice[1].usd_market_cap).toString() : new BigNumber(0).toString(),
+        usd_24h_vol: assetAddressToPrice[1].usd_24h_vol ? new BigNumber(assetAddressToPrice[1].usd_24h_vol).toString() : new BigNumber(0).toString(),
+        usd_24h_change: assetAddressToPrice[1].usd_24h_change ? new BigNumber(assetAddressToPrice[1].usd_24h_change).toString() : new BigNumber(0).toString(),
       }
     }
   }
-  return assetAddressToCoingeckoUsdPrice;
+  return assetAddressToCoingeckoUsdPriceInfo;
 }

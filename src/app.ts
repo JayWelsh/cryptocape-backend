@@ -51,7 +51,7 @@ import {
   getCombinedValueBreakdownOfAccounts,
 } from './tasks/get-combined-value-breakdown-of-accounts';
 
-import { IBalanceEntry } from "./interfaces";
+import { IBalanceEntry, ICoingeckoAssetPriceEntry } from "./interfaces";
 import { sleep } from "./utils";
 
 import { IToken } from './interfaces';
@@ -170,7 +170,7 @@ const runFullSync = async (useTimestampUnix: number, startTime: number) => {
 		let addressToNetworkToLatestBlock : IAddressToNetworkToLatestBlock = {};
 		let tokenAddressToNameToUsd : {[key: string]: {[key: string]: string}} = {} = {};
 		let tokenAddressList: ITokenAddressList = {};
-		let networkToCoingeckoPrices : {[key: string]: {[key: string]: string}} = {};
+		let networkToCoingeckoPrices : {[key: string]: {[key: string]: ICoingeckoAssetPriceEntry}} = {};
 		let addressToMultichainBalances : IAddressToMultichainBalances = {};
 		let addressToMultichainBaseBalance : IAddressToMultichainBaseBalance = {};
 
@@ -240,8 +240,8 @@ const runFullSync = async (useTimestampUnix: number, startTime: number) => {
 			for(let [network, chainBalances] of Object.entries(networksToBalances)) {
 				for(let [tokenAddress, balanceEntry] of Object.entries(chainBalances)) {
 					let coingeckoPrice = networkToCoingeckoPrices[network][tokenAddress];
-					if(coingeckoPrice) {
-						let tokenBalanceValue = new BigNumber(utils.formatUnits(balanceEntry.balance, balanceEntry.tokenInfo.decimal)).multipliedBy(coingeckoPrice).toString();
+					if(coingeckoPrice?.usd) {
+						let tokenBalanceValue = new BigNumber(utils.formatUnits(balanceEntry.balance, balanceEntry.tokenInfo.decimal)).multipliedBy(coingeckoPrice.usd).toString();
 						tempUSD = new BigNumber(tempUSD).plus(tokenBalanceValue).toString();
 						if(new BigNumber(tokenBalanceValue).isGreaterThan(1)) {
 							if(tokenAddressToNameToUsd[balanceEntry.tokenInfo.address]?.[balanceEntry.tokenInfo.symbol]) {
@@ -353,9 +353,31 @@ const runPriceSync = async (useTimestampUnix: number, startTime: number) => {
 			let coingeckoNetwork = networkToCoingeckoId[networkName];
 			let assetPrices = await fetchCoingeckoPrices(nonBaseAssetQueryString, coingeckoNetwork);
 			for(let [assetAddress, assetPrice] of Object.entries(assetPrices)) {
-				if(new BigNumber(assetPrice).isGreaterThan(0)) {
-					await AssetRepository.updateLastPriceOfAsset(assetAddress, assetPrice);
+
+				if(new BigNumber(assetPrice?.usd).isGreaterThan(0)) {
+					await AssetRepository.updateLastPriceOfAsset(assetAddress, assetPrice?.usd);
+				} else {
+					await AssetRepository.updateLastPriceOfAsset(assetAddress, "0");
 				}
+
+				if(new BigNumber(assetPrice?.usd_24h_vol).isGreaterThan(0)) {
+					await AssetRepository.update24HrVolumeOfAsset(assetAddress, assetPrice?.usd_24h_vol);
+				} else {
+					await AssetRepository.update24HrVolumeOfAsset(assetAddress, "0");
+				}
+
+				if(new BigNumber(assetPrice?.usd_market_cap).isGreaterThan(0)) {
+					await AssetRepository.updateMarketCapOfAsset(assetAddress, assetPrice?.usd_market_cap);
+				} else {
+					await AssetRepository.updateMarketCapOfAsset(assetAddress, "0");
+				}
+
+				if(!(new BigNumber(assetPrice?.usd_24h_change).isNaN())) {
+					await AssetRepository.update24HrChangePercentOfAsset(assetAddress, assetPrice?.usd_24h_change);
+				} else {
+					await AssetRepository.update24HrChangePercentOfAsset(assetAddress, "0");
+				}
+
 			}
 
 			// await sleep(1000);
@@ -366,6 +388,26 @@ const runPriceSync = async (useTimestampUnix: number, startTime: number) => {
 		for(let [baseAssetNetworkKey, baseAssetPriceObject] of Object.entries(baseAssetPrices)) {
 			if(new BigNumber(baseAssetPriceObject.usd).isGreaterThan(0)) {
 				await AssetRepository.updateLastPriceOfAsset(baseAssetIdToSymbol[baseAssetNetworkKey], baseAssetPriceObject.usd.toString());
+			}  else {
+				await AssetRepository.updateLastPriceOfAsset(baseAssetIdToSymbol[baseAssetNetworkKey], "0");
+			}
+
+			if(new BigNumber(baseAssetPriceObject?.usd_24h_vol).isGreaterThan(0)) {
+				await AssetRepository.update24HrVolumeOfAsset(baseAssetIdToSymbol[baseAssetNetworkKey], baseAssetPriceObject?.usd_24h_vol);
+			} else {
+				await AssetRepository.update24HrVolumeOfAsset(baseAssetIdToSymbol[baseAssetNetworkKey], "0");
+			}
+
+			if(new BigNumber(baseAssetPriceObject?.usd_market_cap).isGreaterThan(0)) {
+				await AssetRepository.updateMarketCapOfAsset(baseAssetIdToSymbol[baseAssetNetworkKey], baseAssetPriceObject?.usd_market_cap);
+			} else {
+				await AssetRepository.updateMarketCapOfAsset(baseAssetIdToSymbol[baseAssetNetworkKey], "0");
+			}
+
+			if(!(new BigNumber(baseAssetPriceObject?.usd_24h_change).isNaN())) {
+				await AssetRepository.update24HrChangePercentOfAsset(baseAssetIdToSymbol[baseAssetNetworkKey], baseAssetPriceObject?.usd_24h_change);
+			} else {
+				await AssetRepository.update24HrChangePercentOfAsset(baseAssetIdToSymbol[baseAssetNetworkKey], "0");
 			}
 		}
 

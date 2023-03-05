@@ -3,6 +3,10 @@ import axios from 'axios';
 import { raw } from 'objection';
 import { utils } from "ethers";
 
+import {
+  sleep
+} from '../utils';
+
 BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 
 import {
@@ -85,6 +89,7 @@ const getAllAccountTransactionsERC20 = async (
   } catch (e) {
     retryCount++;
     console.log(`Error fetching ERC20 txs for ${account} on ${network}, retryCount: ${retryCount}, error: ${e}`);
+    await sleep(5000);
     if(retryCount <= maxRetries) {
       let response: IEtherscanTxERC20[] = await getAllAccountTransactionsERC20(account, network, startBlock, page, pageSize, results, retryCount);
       return response ? response : [];

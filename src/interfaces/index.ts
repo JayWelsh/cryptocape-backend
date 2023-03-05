@@ -48,7 +48,7 @@ export interface INetworkToBalancesERC20 {
 }
 
 export interface ITokenAddressToLastPrice {
-  [key: string]: string
+  [key: string]: ICoingeckoAssetPriceEntry
 }
 
 export interface ICoingeckoAssetPriceEntryResponse {
@@ -56,7 +56,10 @@ export interface ICoingeckoAssetPriceEntryResponse {
 }
 
 export interface ICoingeckoAssetPriceEntry {
-  usd: number 
+  usd: string
+  usd_market_cap: string
+  usd_24h_vol: string
+  usd_24h_change: string
 }
 
 export interface INetwork {
@@ -69,6 +72,9 @@ export interface IAccountAssetValueEntry {
   value: string;
   symbol: string;
   percentage_of_total: string;
+  market_cap_usd?: string,
+  volume_24hr_usd?: string,
+  change_24hr_usd_percent?: string,
   token_price: string;
 }
 

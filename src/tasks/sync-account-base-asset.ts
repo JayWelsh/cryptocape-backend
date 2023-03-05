@@ -3,6 +3,10 @@ import axios from 'axios';
 import { raw } from 'objection';
 import { utils } from "ethers";
 
+import {
+  sleep
+} from '../utils';
+
 BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 
 import {
@@ -121,6 +125,7 @@ const getAndSetBaseAssetBalance = async (
     console.log(`Error fetching base assets for ${account} on ${network}, retryCount: ${retryCount}, error: ${e}`);
     if(retryCount <= maxRetries) {
       let response : string = await getAndSetBaseAssetBalance(account, network, retryCount);
+      await sleep(5000);
       return response ? response.toString() : "0";
     }
   }
