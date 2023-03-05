@@ -25,7 +25,7 @@ export const networkToBaseAssetId: {[key: string]: string} = {
 }
 
 export const baseAssetIdToSymbol: {[key: string]: string} = {
-  "arbitrum": "ARBI",
+  "arbitrum": "ETH",
   "ethereum": "ETH",
   "optimism": "OP",
   "canto": "CANTO",
