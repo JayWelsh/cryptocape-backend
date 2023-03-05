@@ -8,10 +8,11 @@ class BalanceRepository extends BaseRepository {
     return BalanceModel
   }
 
-  async getBalanceByAssetAndHolder(assetAddress: string, holderAddress: string) {
+  async getBalanceByAssetAndHolder(assetAddress: string, holderAddress: string, networkName: string) {
     const result = await this.model.query().where(function (this: QueryBuilder<BalanceModel>) {
       this.where('asset_address', assetAddress);
       this.where('holder_address', holderAddress);
+      this.where('network_name', networkName);
     }).first();
 
     return this.parserResult(result);

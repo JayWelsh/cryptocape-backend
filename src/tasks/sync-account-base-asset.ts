@@ -45,7 +45,7 @@ const setBaseAssetBalance = async (
   balance: string,
 ) => {
   // Check if balance record exists for this address
-  let existingBalanceRecord = await BalanceRepository.getBalanceByAssetAndHolder(baseAssetSymbol, account);
+  let existingBalanceRecord = await BalanceRepository.getBalanceByAssetAndHolder(baseAssetSymbol, account, network);
   if(!existingBalanceRecord) {
     // Create balance record
     await BalanceRepository.create({
@@ -94,10 +94,7 @@ const getAndSetBaseAssetBalance = async (
           }
         );
         let balance = response?.data?.result;
-        // TODO, ENABLE ARBI
-        if(network !== 'arbitrum') {
-          await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
-        }
+        await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
         return balance;
       } else {
         return "0";

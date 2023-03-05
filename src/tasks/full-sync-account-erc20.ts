@@ -233,7 +233,7 @@ export const fullSyncAccountBalancesERC20 = async (useTimestampUnix: number, sta
         });
       }
       // Check if balance record exists for this address
-      let existingBalanceRecord = await BalanceRepository.getBalanceByAssetAndHolder(tokenAddress, address);
+      let existingBalanceRecord = await BalanceRepository.getBalanceByAssetAndHolder(tokenAddress, address, network);
       if(onchainBalances[tokenAddress] && isValidBalance(onchainBalances[tokenAddress])) {
         parsedBalances[tokenAddress].balance = onchainBalances[tokenAddress];
         if(!existingBalanceRecord) {
