@@ -93,9 +93,19 @@ const getAndSetBaseAssetBalance = async (
             headers: { "Accept-Encoding": "gzip,deflate,compress" }
           }
         );
-        let balance = response?.data?.result;
-        await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
-        return balance;
+        if(response?.data?.status === "1") {
+          let balance = response?.data?.result;
+          await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
+          return balance;
+        } else {
+          // leave balance unchanged and return current balance
+          let existingBalanceRecord = await BalanceRepository.getBalanceByAssetAndHolder(baseAssetSymbol, account, network);
+          if(existingBalanceRecord) {
+            return existingBalanceRecord.balance;
+          } else {
+            return "0";
+          }
+        }
       } else {
         return "0";
       }
