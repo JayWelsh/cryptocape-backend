@@ -101,6 +101,7 @@ const getAllAccountTransactionsERC20 = async (
 const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC20[], account: string, network: string) => {
  
   let tokenAddressToBalance : ITokenAddressToBalance = {};
+  let tokenAddressToZeroBalance : ITokenAddressToBalance = {};
 
   for(let transaction of transactions) {
 
@@ -157,12 +158,16 @@ const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC2
 
     // Remove zero values
     if(tokenAddressToBalance[contractAddress].balance === "0") {
+      tokenAddressToZeroBalance[contractAddress] = tokenAddressToBalance[contractAddress];
       delete tokenAddressToBalance[contractAddress];
     }
 
   }
 
-  return tokenAddressToBalance;
+  return {
+    parsedBalances: tokenAddressToBalance,
+    zeroBalances: tokenAddressToZeroBalance,
+  };
 
 }
 
@@ -207,7 +212,10 @@ export const fullSyncAccountBalancesERC20 = async (useTimestampUnix: number, sta
       console.log(`Fetched ${transactions.length} ERC-20 transactions on ${network}`);
     }
 
-    let parsedBalances = await parseTransactionsIntoBalancesERC20(transactions, address, network);
+    let {
+      parsedBalances,
+      zeroBalances,
+    } = await parseTransactionsIntoBalancesERC20(transactions, address, network);
 
     if(debugMode) {
       console.log({parsedBalances});
@@ -217,6 +225,7 @@ export const fullSyncAccountBalancesERC20 = async (useTimestampUnix: number, sta
       console.log(`Fetching balances for non-zero values directly from blockchain (${network})`);
     }
 
+    // We don't double check zero balances against chain else some accounts would end up making a huge excess of on-chain calls
     let onchainBalances = await getOnchainBalancesFromParsedBalances(parsedBalances, address, network);
 
     for(let [tokenAddress, parsedBalanceEntry] of Object.entries(parsedBalances)) {
@@ -251,6 +260,17 @@ export const fullSyncAccountBalancesERC20 = async (useTimestampUnix: number, sta
           }, existingBalanceRecord.id);
         }
       }
+    }
+
+    // Clear zero balances
+    for(let [tokenAddress, zeroBalanceEntry] of Object.entries(zeroBalances)) {
+      // Check if balance record exists for this address
+      let existingBalanceRecord = await BalanceRepository.getBalanceByAssetAndHolder(tokenAddress, address, network);
+      if(existingBalanceRecord) {
+        // Delete balance record
+        await BalanceRepository.delete(existingBalanceRecord.id);
+      }
+      // TODO: Check if any other balances use this token address else clear it from the asset table
     }
 
     if(debugMode) {
