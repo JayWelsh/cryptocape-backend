@@ -82,3 +82,25 @@ export interface ITimeseries {
   value: string | number;
   timestamp: string;
 }
+
+export interface IAddressToMultichainBaseBalance {
+	[key: string]: {[key: string]: string}
+}
+
+export interface ITokenAddressList {
+	[key: string]: string[]
+}
+
+export interface IAddressToNetworkToLatestBlock {
+	[key: string]: {
+		[key: string]: string
+	}
+}
+
+export interface IAddressToMultichainBalances {
+	[key: string]: {
+		[key: string]: {
+			[key: string]: IBalanceEntry
+		}
+	}
+}

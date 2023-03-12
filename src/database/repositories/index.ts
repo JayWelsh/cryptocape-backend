@@ -8,6 +8,7 @@ import BundleAdminRepository from "./BundleAdminRepository";
 import BundleContentRepository from "./BundleContentRepository";
 import NetworkRepository from "./NetworkRepository";
 import SyncTrackRepository from "./SyncTrackRepository";
+import ResyncTrackRepository from "./ResyncTrackRepository";
 
 export {
   AccountRepository,
@@ -20,4 +21,5 @@ export {
   BundleContentRepository,
   NetworkRepository,
   SyncTrackRepository,
+  ResyncTrackRepository,
 };

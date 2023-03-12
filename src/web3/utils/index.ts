@@ -212,6 +212,20 @@ export const isETHAddress = (value: string) => {
   }
 }
 
+export const isETHAddressArray = (value: string[]) => {
+  let result = true;
+  for(let entry of value) {
+    try {
+      if(result) {
+        result = utils.isAddress(entry);
+      }
+    } catch (e) {
+      result = false
+    }
+  }
+  return result;
+}
+
 export const isSupportedNetwork = (network: string) => {
   let networkNames = ["ethereum", "canto", "arbitrum", "optimism"];
   if(networkNames.indexOf(network) > -1) {

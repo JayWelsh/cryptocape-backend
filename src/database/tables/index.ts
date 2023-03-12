@@ -8,6 +8,7 @@ const BUNDLE_ADMIN_TABLE = 'bundle_admin';
 const BUNDLE_CONTENT_TABLE = 'bundle_content';
 const NETWORK_TABLE = 'network';
 const SYNC_TRACK_TABLE = 'sync_track';
+const RESYNC_TRACK_TABLE = 'resync_track';
 
 export {
   ACCOUNT_TABLE,
@@ -20,4 +21,5 @@ export {
   BUNDLE_CONTENT_TABLE,
   NETWORK_TABLE,
   SYNC_TRACK_TABLE,
+  RESYNC_TRACK_TABLE
 }

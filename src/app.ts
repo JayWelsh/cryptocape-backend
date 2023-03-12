@@ -41,8 +41,7 @@ import {
 	getTokenInfoERC20
 } from './web3/jobs';
 
-import { fullSyncAccountBalancesERC20 } from './tasks/full-sync-account-erc20';
-import { syncAccountBalanceBaseAsset } from './tasks/sync-account-base-asset';
+import { runAccountFullNetworkSync } from './tasks/full-sync-account-network';
 import {
 	fetchCoingeckoPrices,
 	fetchBaseAssetCoingeckoPrices,
@@ -51,10 +50,17 @@ import {
   getCombinedValueBreakdownOfAccounts,
 } from './tasks/get-combined-value-breakdown-of-accounts';
 
-import { IBalanceEntry, ICoingeckoAssetPriceEntry } from "./interfaces";
 import { sleep } from "./utils";
 
-import { IToken } from './interfaces';
+import {
+	IBalanceEntry,
+	ICoingeckoAssetPriceEntry,
+	IToken,
+	IAddressToMultichainBaseBalance,
+	ITokenAddressList,
+	IAddressToNetworkToLatestBlock,
+	IAddressToMultichainBalances,
+} from './interfaces';
 
 BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 
@@ -85,77 +91,6 @@ app.listen(port);
 
 console.log(`----- ⚡ SERVER LISTENING ⚡ -----`);
 console.log(`-------- ⚡ PORT: ${port} ⚡ --------`);
-
-interface IAddressToMultichainBaseBalance {
-	[key: string]: {[key: string]: string}
-}
-
-interface ITokenAddressList {
-	[key: string]: string[]
-}
-
-interface IAddressToNetworkToLatestBlock {
-	[key: string]: {
-		[key: string]: string
-	}
-}
-
-interface IAddressToMultichainBalances {
-	[key: string]: {
-		[key: string]: {
-			[key: string]: IBalanceEntry
-		}
-	}
-}
-
-const runNetworkSync = async (
-	network: string,
-	address: string,
-	postgresTimestamp: number,
-	tokenAddressList: ITokenAddressList,
-	addressToMultichainBalances: IAddressToMultichainBalances,
-	addressToNetworkToLatestBlock: IAddressToNetworkToLatestBlock,
-	addressToMultichainBaseBalance: IAddressToMultichainBaseBalance,
-) => {
-
-	let latestSyncRecord = await SyncTrackRepository.getSyncTrack(address, network, 'erc20-sync');
-	let startBlock = latestSyncRecord?.latest_block_synced ? latestSyncRecord?.latest_block_synced : "0";
-
-	let [baseAssetBalance, balances] = await Promise.all([
-		syncAccountBalanceBaseAsset(postgresTimestamp, new Date().getTime(), address, network),
-		fullSyncAccountBalancesERC20(postgresTimestamp, new Date().getTime(), address, network, startBlock),
-	]);
-
-	if(addressToMultichainBaseBalance[address]) {
-		addressToMultichainBaseBalance[address][network] = baseAssetBalance;
-	} else {
-		addressToMultichainBaseBalance[address] = {};
-		addressToMultichainBaseBalance[address][network] = baseAssetBalance;
-	}
-
-	if(balances){
-		for(let [key, balanceEntry] of Object.entries(balances)) {
-			if(network)
-			if(!tokenAddressList[network]) {
-				tokenAddressList[network] = [key];
-			} else {
-				tokenAddressList[network].push(key);
-			}
-			if(!addressToNetworkToLatestBlock[address]) {
-				addressToNetworkToLatestBlock[address] = {};
-			}
-			if(!addressToNetworkToLatestBlock[address][network] || new BigNumber(balanceEntry.latestBlock).isGreaterThan(addressToNetworkToLatestBlock[address][network])) {
-				addressToNetworkToLatestBlock[address][network] = balanceEntry.latestBlock;
-			}
-		}
-		if(addressToMultichainBalances[address]) {
-			addressToMultichainBalances[address][network] = balances;
-		} else {
-			addressToMultichainBalances[address] = {};
-			addressToMultichainBalances[address][network] = balances;
-		}
-	}
-}
 
 const runFullSync = async (useTimestampUnix: number, startTime: number) => {
 
@@ -202,7 +137,7 @@ const runFullSync = async (useTimestampUnix: number, startTime: number) => {
 			}
 
 			await Promise.all(networks.map((network) => 
-				runNetworkSync(
+				runAccountFullNetworkSync(
 					network,
 					address,
 					postgresTimestamp,

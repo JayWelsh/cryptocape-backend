@@ -21,6 +21,7 @@ import NetworkModel from './NetworkModel';
 
 // SYNC TRACKING
 import SyncTrackModel from './SyncTrackModel';
+import ResyncTrackModel from './ResyncTrackModel';
 
 export {
   AssetModel,
@@ -33,4 +34,5 @@ export {
   BundleContentModel,
   NetworkModel,
   SyncTrackModel,
+  ResyncTrackModel,
 }
