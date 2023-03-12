@@ -69,7 +69,7 @@ BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 let contractEventIndexerPeriodMinutes = 2;
 
 let corsOptions = {
-  origin: ['http://localhost:3000'],
+  origin: ['http://localhost:3000', 'https://cryptocape.com'],
 }
 
 dotenv.config();
