@@ -160,6 +160,10 @@ const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC2
     if(tokenAddressToBalance[contractAddress].balance === "0") {
       tokenAddressToZeroBalance[contractAddress] = tokenAddressToBalance[contractAddress];
       delete tokenAddressToBalance[contractAddress];
+    } else if (tokenAddressToZeroBalance[contractAddress]) {
+      // When balance goes from non-zero to zero and then back above non-zero...
+      // Clear the zero balance record ( !0 -> 0 -> !0 )
+      delete tokenAddressToZeroBalance[contractAddress];
     }
 
   }
