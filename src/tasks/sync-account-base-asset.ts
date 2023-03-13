@@ -30,6 +30,8 @@ import e from 'express';
 import {
   debugMode,
   baseAssetIdToSymbol,
+  ETHERSCAN_API_KEY,
+  ARBISCAN_API_KEY,
 } from '../constants';
 
 let pageSize = 1000;
@@ -74,13 +76,13 @@ const getAndSetBaseAssetBalance = async (
     if(['ethereum', 'optimism', 'arbitrum'].indexOf(network) > -1) {
       let url;
       if(network === 'ethereum') {
-        url = `https://api.etherscan.io/api?module=account&action=balance&address=${account}&tag=latest&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE`;
+        url = `https://api.etherscan.io/api?module=account&action=balance&address=${account}&tag=latest&apikey=${ETHERSCAN_API_KEY}`;
       }
       if(network === 'optimism') {
         url = `https://api-optimistic.etherscan.io/api?module=account&action=balance&address=${account}&tag=latest`;
       }
       if(network === 'arbitrum') {
-        url = `https://api.arbiscan.io/api?module=account&action=balance&address=${account}&tag=latest`;
+        url = `https://api.arbiscan.io/api?module=account&action=balance&address=${account}&tag=latest&apikey=${ARBISCAN_API_KEY}`;
       }
       if(url) {
         if(debugMode) {
@@ -93,7 +95,7 @@ const getAndSetBaseAssetBalance = async (
             headers: { "Accept-Encoding": "gzip,deflate,compress" }
           }
         );
-        if(response?.data?.status === "1") {
+        if(response?.data && response?.data?.status === "1" && response?.data?.result) {
           let balance = response?.data?.result;
           await setBaseAssetBalance(account, network, baseAssetSymbol, balance);
           return balance;

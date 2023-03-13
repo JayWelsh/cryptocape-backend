@@ -36,6 +36,8 @@ jobs:
             echo ALCHEMY_API_KEY_ETHEREUM=\"'${{secrets.ALCHEMY_API_KEY_ETHEREUM}}'\" >> .env
             echo ALCHEMY_API_KEY_OPTIMISM=\"'${{secrets.ALCHEMY_API_KEY_OPTIMISM}}'\" >> .env
             echo ALCHEMY_API_KEY_ARBITRUM=\"'${{secrets.ALCHEMY_API_KEY_ARBITRUM}}'\" >> .env
+            echo ETHERSCAN_API_KEY=\"'${{secrets.ETHERSCAN_API_KEY}}'\" >> .env
+            echo ARBISCAN_API_KEY=\"'${{secrets.ARBISCAN_API_KEY}}'\" >> .env
             echo COINGECKO_API_KEY=\"'${{secrets.COINGECKO_API_KEY}}'\" >> .env
             yarn run build
             yarn run knex migrate:latest

@@ -28,7 +28,9 @@ import {
 import e from 'express';
 
 import {
-  debugMode
+  debugMode,
+  ETHERSCAN_API_KEY,
+  ARBISCAN_API_KEY,
 } from '../constants';
 
 import {
@@ -55,13 +57,13 @@ const getAllAccountTransactionsERC20 = async (
   try {
     let url;
     if(network === 'ethereum') {
-      url = `https://api.etherscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&offset=${offset}&startblock=${startBlock}&apikey=4H7XW7VUYZD2A63GPIJ4YWEMIMTU6M9PGE`;
+      url = `https://api.etherscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&offset=${offset}&startblock=${startBlock}&apikey=${ETHERSCAN_API_KEY}`;
     }
     if(network === 'optimism') {
       url = `https://api-optimistic.etherscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&startblock=${startBlock}&offset=${offset}`;
     }
     if(network === 'arbitrum') {
-      url = `https://api.arbiscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&startblock=${startBlock}&offset=${offset}`;
+      url = `https://api.arbiscan.io/api?module=account&action=tokentx&address=${account}&page=${page}&sort=asc&startblock=${startBlock}&offset=${offset}&apikey=${ARBISCAN_API_KEY}`;
     }
     if(url) {
       if(debugMode) {
@@ -77,7 +79,7 @@ const getAllAccountTransactionsERC20 = async (
       let message = response?.data?.message;
       let data = response?.data?.result;
       let additionalResults: IEtherscanTxERC20[] = [];
-      if(data.length > 0) {
+      if(data && data.length > 0) {
         if(data.length === pageSize) {
           additionalResults = await getAllAccountTransactionsERC20(account, network, startBlock, page + 1, pageSize, results, retryCount);
         }
