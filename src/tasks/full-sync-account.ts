@@ -4,14 +4,10 @@ import { utils } from "ethers";
 import { runAccountFullNetworkSync } from './full-sync-account-network';
 
 import {
-	SyncTrackRepository,
   AccountRepository,
 } from "../database/repositories";
 
 import {
-	IBalanceEntry,
-	ICoingeckoAssetPriceEntry,
-	IToken,
 	IAddressToMultichainBaseBalance,
 	ITokenAddressList,
 	IAddressToNetworkToLatestBlock,

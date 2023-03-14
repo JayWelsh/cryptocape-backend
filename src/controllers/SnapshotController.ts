@@ -10,10 +10,6 @@ import {
 
 import BigNumber from 'bignumber.js';
 
-import {
-  IAccountAssetValueEntry,
-} from '../interfaces';
-
 // import {
 //   RateOutputTransformer
 // } from '../database/transformers';

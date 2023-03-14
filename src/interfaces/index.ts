@@ -76,6 +76,7 @@ export interface IAccountAssetValueEntry {
   volume_24hr_usd?: string,
   change_24hr_usd_percent?: string,
   token_price: string;
+  token_decimals: string;
 }
 
 export interface ITimeseries {

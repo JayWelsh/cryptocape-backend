@@ -46,6 +46,7 @@ export const getCombinedValueBreakdownOfAccounts = async (addressesArray: string
               value: valueUsd,
               symbol: symbol,
               token_price: last_price_usd,
+              token_decimals: decimals,
               percentage_of_total: "",
               market_cap_usd,
               volume_24hr_usd,

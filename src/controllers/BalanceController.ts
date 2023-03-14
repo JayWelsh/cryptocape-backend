@@ -11,10 +11,6 @@ import {
 import BigNumber from 'bignumber.js';
 
 import {
-  IAccountAssetValueEntry,
-} from '../interfaces';
-
-import {
   getTokenInfoERC20
 } from '../web3/jobs';
 

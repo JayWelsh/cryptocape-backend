@@ -64,7 +64,7 @@ const setBaseAssetBalance = async (
   }
 }
 
-let maxRetries = 5;
+let maxRetries = 3;
 
 const getAndSetBaseAssetBalance = async (
   account: string,

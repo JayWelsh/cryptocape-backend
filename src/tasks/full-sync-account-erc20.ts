@@ -43,7 +43,7 @@ interface ITokenAddressToBalance {
   [key: string]: IBalanceEntry
 }
 
-let maxRetries = 5;
+let maxRetries = 3;
 
 const getAllAccountTransactionsERC20 = async (
   account: string,
