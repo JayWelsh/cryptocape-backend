@@ -40,10 +40,10 @@ export const getCombinedValueBreakdownTimeseries = async (addressesArray: string
     timeseries.push(timestampToTimeseriesEntry);
   }
 
-  // for(let [assetAddress, valueEntry] of Object.entries(assetAddressToValue)) {
-  //   assetAddressToValue[assetAddress].percentage_of_total = new BigNumber(valueEntry.value).multipliedBy(100).dividedBy(total).toString();
-  // }
+  let sortedTimeseries = timeseries.sort((a, b) => {
+    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+  })
   
-  return timeseries;
+  return sortedTimeseries;
 
 }
