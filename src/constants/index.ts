@@ -35,4 +35,10 @@ export const baseAssetIdToSymbol: {[key: string]: string} = {
   "canto": "CANTO",
 }
 
+export const baseAssetSymbolToCoingeckoId: {[key: string]: string} = {
+  "ETH": "ethereum",
+  "OP": "optimism",
+  "CANTO": "canto",
+}
+
 export const debugMode = false;

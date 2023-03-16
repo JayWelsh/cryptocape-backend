@@ -10,6 +10,10 @@ import {
   IAccountAssetValueEntry,
 } from '../interfaces';
 
+import {
+  baseAssetSymbolToCoingeckoId,
+} from '../constants';
+
 BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 
 export const getCombinedValueBreakdownOfAccounts = async (addressesArray: string[]) => {
@@ -33,6 +37,7 @@ export const getCombinedValueBreakdownOfAccounts = async (addressesArray: string
         change_24hr_usd_percent,
         symbol,
         coingecko_id,
+        is_base_asset,
       } = asset;
       if(new BigNumber(last_price_usd).isGreaterThan(0)) {
         let valueUsd = new BigNumber(utils.formatUnits(balance, decimals)).multipliedBy(last_price_usd).toString();
@@ -52,7 +57,7 @@ export const getCombinedValueBreakdownOfAccounts = async (addressesArray: string
               market_cap_usd,
               volume_24hr_usd,
               change_24hr_usd_percent,
-              coingecko_id: coingecko_id ? coingecko_id : false,
+              coingecko_id: !is_base_asset ? (coingecko_id ? coingecko_id : false) : (baseAssetSymbolToCoingeckoId[symbol] ? baseAssetSymbolToCoingeckoId[symbol] : false),
             };
           }
         }
