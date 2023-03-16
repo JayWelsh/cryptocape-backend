@@ -32,6 +32,7 @@ export const getCombinedValueBreakdownOfAccounts = async (addressesArray: string
         volume_24hr_usd,
         change_24hr_usd_percent,
         symbol,
+        coingecko_id,
       } = asset;
       if(new BigNumber(last_price_usd).isGreaterThan(0)) {
         let valueUsd = new BigNumber(utils.formatUnits(balance, decimals)).multipliedBy(last_price_usd).toString();
@@ -51,6 +52,7 @@ export const getCombinedValueBreakdownOfAccounts = async (addressesArray: string
               market_cap_usd,
               volume_24hr_usd,
               change_24hr_usd_percent,
+              coingecko_id: coingecko_id ? coingecko_id : false,
             };
           }
         }

@@ -85,6 +85,7 @@ export interface IAccountAssetValueEntry {
   change_24hr_usd_percent?: string,
   token_price: string;
   token_decimals: string;
+  coingecko_id: false | string;
 }
 
 export interface ITimeseries {
