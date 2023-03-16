@@ -52,6 +52,15 @@ class AssetRepository extends BaseRepository {
       return this.parserResult(new Pagination(results, perPage, page))
     }
 
+    async getPositivePriceAssetsMissingCoingeckoIds() {
+      const result = await this.model.query().where(function (this: QueryBuilder<AssetModel>) {
+        this.where('last_price_usd', '>', 0);
+        this.where('coingecko_id', null);
+      })
+
+      return this.parserResult(result);
+    }
+
     async updateLastPriceOfAsset(assetAddress: string, lastPrice: string) {
       await this.model.query().update({last_price_usd: lastPrice}).where("address", assetAddress);
     }

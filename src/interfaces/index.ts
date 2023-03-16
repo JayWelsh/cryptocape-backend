@@ -62,6 +62,14 @@ export interface ICoingeckoAssetPriceEntry {
   usd_24h_change: string
 }
 
+export interface ICoingeckoAssetInfo {
+  "id": string
+  "symbol": string
+  "name": string
+  "asset_platform_id": string
+  "platforms": {[key: string]: string}
+}
+
 export interface INetwork {
   id: number
   name: string

@@ -47,6 +47,9 @@ import {
 	fetchBaseAssetCoingeckoPrices,
 } from './tasks/fetch-coingecko-prices';
 import {
+	patchMissingCoingeckoIds,
+} from './tasks/patch-missing-coingecko-ids'
+import {
   getCombinedValueBreakdownOfAccounts,
 } from './tasks/get-combined-value-breakdown-of-accounts';
 
@@ -421,6 +424,7 @@ const snapSyncTracker = async () => {
 	let useTimestampUnix = Math.floor(new Date().setSeconds(0) / 1000);
 	let startTimePriceSync = new Date().getTime();
 	await runPriceSync(useTimestampUnix, startTimePriceSync);
+	await patchMissingCoingeckoIds();
 	let is10MinuteMark = (useTimestampUnix % 600) === 0;
 	if(is10MinuteMark) {
 		let startTimeValueSnapshot = new Date().getTime();
