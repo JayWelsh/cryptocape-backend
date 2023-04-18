@@ -2,6 +2,7 @@ import { AssetModel } from "../models";
 import BaseRepository from "./BaseRepository";
 import { QueryBuilder } from "objection";
 import Pagination, { IPaginationRequest } from "../../utils/Pagination";
+import { ITransformer } from "../../interfaces";
 
 class AssetRepository extends BaseRepository {
     getModel() {
@@ -16,13 +17,17 @@ class AssetRepository extends BaseRepository {
       return this.parserResult(result);
     }
 
-    async getAssetByAddressAndNetwork(assetAddress: string, network: string) {
+    async getAssetByAddressAndNetwork(
+      assetAddress: string,
+      network: string,
+      transformer?: ITransformer,
+    ) {
       const result = await this.model.query().where(function (this: QueryBuilder<AssetModel>) {
         this.where('address', assetAddress);
         this.where('network_name', network);
       }).first();
 
-      return this.parserResult(result);
+      return this.parserResult(result, transformer);
     }
 
     async getBaseAssetByNetwork(networkName: string) {

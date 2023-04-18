@@ -88,6 +88,24 @@ export interface IAccountAssetValueEntry {
   coingecko_id: false | string;
 }
 
+export interface IAssetRecordDB {
+  id: number;
+  address: string;
+  network_name: string;
+  symbol: string;
+  standard: string;
+  decimals: string;
+  created_at: string;
+  updated_at: string;
+  name: string;
+  last_price_usd: string;
+  is_base_asset: boolean,
+  market_cap_usd: string;
+  volume_24hr_usd: string;
+  change_24hr_usd_percent: string;
+  coingecko_id: null | string;
+}
+
 export interface ITimeseries {
   value: string | number;
   timestamp: string;
