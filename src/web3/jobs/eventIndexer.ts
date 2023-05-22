@@ -4,15 +4,16 @@ import {
 
 export const eventIndexer = async (
   contract: any,
+  abi: any,
   eventFilter: any,
   latestBlockNumber: number,
   fromBlock: number,
   toBlock: number,
   blockRange: number,
+  maxBlockBatchSize: number,
+  network: string,
   meta: string,
 ) => {
-
-  let maxBlockBatchSize = 150000;
 
   if(blockRange > 0) {
 
@@ -58,7 +59,7 @@ export const eventIndexer = async (
       }
 
       // fetch batch
-      const eventContractEventBatch = await queryFilterRetryOnFailure(contract, eventFilter, fromBlock, toBlock);
+      const eventContractEventBatch = await queryFilterRetryOnFailure(contract, abi, eventFilter, network, fromBlock, toBlock);
       events = [...events, ...(eventContractEventBatch ? eventContractEventBatch : [])];
 
       // log batch status

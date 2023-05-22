@@ -1,4 +1,4 @@
-import { Event, utils } from 'ethers';
+import { Event, utils, Contract } from 'ethers';
 
 import {
   Multicall,
@@ -73,12 +73,14 @@ export const extractFromBlockToBlock = (
 
 export const queryFilterRetryOnFailure = async (
   contract: any,
+  abi: any,
   eventFilter: any,
+  network: string,
   fromBlock?: number,
   toBlock?: number,
   retryCount?: number,
   retryMax?: number,
-): Promise<Array<Event> | null> => {
+): Promise<Array<Event | utils.LogDescription> | null> => {
   if(!retryMax) {
     retryMax = 10;
   }
@@ -86,15 +88,37 @@ export const queryFilterRetryOnFailure = async (
     retryCount = 0;
   }
   try {
-    const eventContractEventBatch = await contract.queryFilter(eventFilter, fromBlock, toBlock);
-    return eventContractEventBatch;
+    if(contract) {
+      const eventContractEventBatch = await contract.queryFilter(eventFilter, fromBlock, toBlock);
+      return eventContractEventBatch;
+    } else {
+      let provider = getNetworkProvider(network);
+      if(provider) {
+        eventFilter.fromBlock = fromBlock;
+        eventFilter.toBlock = toBlock;
+        const eventContractEventBatch = await provider.getLogs(eventFilter);
+        let parsedEventBatch = [];
+        for(let event of eventContractEventBatch) {
+          const RawContract = new Contract(event.address, abi);
+          const connectedContract = await RawContract.connect(provider);
+          try {
+            const parsedEvent = connectedContract.interface.parseLog(event);
+            parsedEventBatch.push(Object.assign(parsedEvent, event));
+          } catch (e) {
+            console.log(`Failed to parse event on ${network} due to event not matching ABI (txhash: ${event.transactionHash})`);
+          }
+        }
+        return parsedEventBatch;
+      }
+      return [];
+    }
   } catch (e) {
     retryCount++;
     if(retryCount <= retryMax) {
-      console.error(`Query failed, starting retry #${retryCount} (eventFilter: ${eventFilter}, fromBlock: ${fromBlock}, toBlock: ${toBlock})`);
-      let randomDelay = 1000 + Math.floor(Math.random() * 1000);
+      console.error(`Query failed, starting retry #${retryCount} (eventFilter: ${eventFilter}, fromBlock: ${fromBlock}, toBlock: ${toBlock}, error: ${e})`);
+      let randomDelay = 1000 + Math.floor(Math.random() * 2000);
       await sleep(randomDelay);
-      return await queryFilterRetryOnFailure(contract, eventFilter, fromBlock, toBlock, retryCount, retryMax);
+      return await queryFilterRetryOnFailure(contract, abi, eventFilter, network, fromBlock, toBlock, retryCount, retryMax);
     } else {
       console.error(`Unable to complete queryFilter after max retries (eventFilter: ${eventFilter}, fromBlock: ${fromBlock}, toBlock: ${toBlock})`);
       return null;
@@ -177,6 +201,16 @@ export const multicallProviderRetryOnFailureLib2 = async (
       console.error(`Unable to complete multicallProviderRetryOnFailure after max retries (meta: ${meta})`);
       return {results: {}, blockNumber: 0};
     }
+  }
+}
+
+export const getNetworkProvider = (network: string) => {
+  if(network === 'ethereum') {
+    return EthersProviderEthereum
+  } else if (network === 'optimism') {
+    return EthersProviderOptimism
+  } else if (network === 'arbitrum') {
+    return EthersProviderArbitrum
   }
 }
 

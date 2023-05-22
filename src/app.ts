@@ -42,6 +42,7 @@ import {
 } from './web3/jobs';
 
 import { runAccountFullNetworkSync } from './tasks/full-sync-account-network';
+import { runArchiveSyncAccountTransactions } from './tasks/archive-sync-account-transactions';
 import {
 	fetchCoingeckoPrices,
 	fetchBaseAssetCoingeckoPrices,
@@ -72,7 +73,7 @@ BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 let contractEventIndexerPeriodMinutes = 2;
 
 let corsOptions = {
-  origin: ['http://localhost:3000', 'https://cryptocape.com', 'https://beta.cryptocape.com', null, 'null'],
+  origin: ['http://localhost:3000', 'https://cryptocape.com', 'https://beta.cryptocape.com', 'null'],
 }
 
 dotenv.config();
@@ -94,6 +95,157 @@ app.listen(port);
 
 console.log(`----- ⚡ SERVER LISTENING ⚡ -----`);
 console.log(`-------- ⚡ PORT: ${port} ⚡ --------`);
+
+const runArchiveSync = async (useTimestampUnix: number, startTime: number) => {
+
+	try {
+		let accounts = await AccountRepository.getActiveAccounts();
+
+		console.log(`Archive syncing ${accounts.filter((entry: any) => entry.enabled).length} accounts`);
+
+		let postgresTimestamp = Math.floor(new Date().setSeconds(0) / 1000);
+
+		let tempUSD = "0";
+		let addressToNetworkToLatestBlock : IAddressToNetworkToLatestBlock = {};
+		let tokenAddressToNameToUsd : {[key: string]: {[key: string]: string}} = {} = {};
+		let tokenAddressList: ITokenAddressList = {};
+		let networkToCoingeckoPrices : {[key: string]: {[key: string]: ICoingeckoAssetPriceEntry}} = {};
+		let addressToMultichainBalances : IAddressToMultichainBalances = {};
+		let addressToMultichainBaseBalance : IAddressToMultichainBaseBalance = {};
+
+		for(let account of accounts) {
+
+			let {
+				address,
+				ethereum_enabled,
+				optimism_enabled,
+				arbitrum_enabled,
+				canto_enabled,
+			} = account;
+
+			address = utils.getAddress(address);
+
+			let networks = [];
+
+			if(ethereum_enabled) {
+				networks.push("ethereum");
+			}
+			if(optimism_enabled) {
+				networks.push("optimism");
+			}
+			if(arbitrum_enabled) {
+				networks.push("arbitrum");
+			}
+			if(canto_enabled) {
+				networks.push("canto");
+			}
+
+			await Promise.all(networks.map((network) => 
+				runArchiveSyncAccountTransactions(
+					network,
+					address,
+					postgresTimestamp,
+					tokenAddressList,
+					addressToMultichainBalances,
+					addressToNetworkToLatestBlock,
+					addressToMultichainBaseBalance
+				)
+			))
+
+		}
+
+		// Get base asset values
+		let baseAssetQueryString = Object.entries(networkToBaseAssetId).map(([key, value]) => value).join(',');
+		let baseAssetPrices = await fetchBaseAssetCoingeckoPrices(baseAssetQueryString)
+		if(debugMode) {
+			console.log({baseAssetPrices})
+		}
+
+		// await sleep(3000);
+
+		for(let [network, entries] of Object.entries(tokenAddressList)) {
+			if(entries.length > 0) {
+				if(debugMode) {
+					console.log({network, entries})
+				}
+				let coingeckoNetwork = networkToCoingeckoId[network];
+				// await sleep(2500);
+				let coingeckoPrices = await fetchCoingeckoPrices(entries.join(','), coingeckoNetwork);
+				networkToCoingeckoPrices[network] = coingeckoPrices;
+			}
+		}
+
+		for(let [address, networksToBalances] of Object.entries(addressToMultichainBalances)) {
+			for(let [network, chainBalances] of Object.entries(networksToBalances)) {
+				for(let [tokenAddress, balanceEntry] of Object.entries(chainBalances)) {
+					let coingeckoPrice = networkToCoingeckoPrices[network][tokenAddress];
+					if(coingeckoPrice?.usd) {
+						let tokenBalanceValue = new BigNumber(utils.formatUnits(balanceEntry.balance, balanceEntry.tokenInfo.decimal)).multipliedBy(coingeckoPrice.usd).toString();
+						tempUSD = new BigNumber(tempUSD).plus(tokenBalanceValue).toString();
+						if(new BigNumber(tokenBalanceValue).isGreaterThan(1)) {
+							if(tokenAddressToNameToUsd[balanceEntry.tokenInfo.address]?.[balanceEntry.tokenInfo.symbol]) {
+								tokenAddressToNameToUsd[balanceEntry.tokenInfo.address][balanceEntry.tokenInfo.symbol] = new BigNumber(tokenAddressToNameToUsd[balanceEntry.tokenInfo.address][balanceEntry.tokenInfo.symbol]).plus(tokenBalanceValue).toString();
+							} else {
+								if(!tokenAddressToNameToUsd[balanceEntry.tokenInfo.address]) {
+									tokenAddressToNameToUsd[balanceEntry.tokenInfo.address] = {};
+									tokenAddressToNameToUsd[balanceEntry.tokenInfo.address][balanceEntry.tokenInfo.symbol] = tokenBalanceValue;
+								} else {
+									tokenAddressToNameToUsd[balanceEntry.tokenInfo.address][balanceEntry.tokenInfo.symbol] = new BigNumber(tokenAddressToNameToUsd[balanceEntry.tokenInfo.address][balanceEntry.tokenInfo.symbol]).plus(tokenBalanceValue).toString();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		for(let [holder, baseHoldings] of Object.entries(addressToMultichainBaseBalance)) {
+			for(let [baseAssetNetwork, baseAssetAmountRaw] of Object.entries(baseHoldings)) {
+				let baseAssetKey = networkToBaseAssetId[baseAssetNetwork];
+				let baseAssetSymbol = baseAssetIdToSymbol[baseAssetKey];
+				let baseAssetPrice = baseAssetPrices?.[baseAssetKey]?.usd;
+				if(debugMode) {
+					console.log({baseAssetAmountRaw, baseAssetPrice, baseAssetKey, baseAssetSymbol, tokenAddressToNameToUsd})
+				}
+				if(baseAssetPrice) {
+					let baseAssetAmount = new BigNumber(utils.formatUnits(baseAssetAmountRaw, 18)).multipliedBy(baseAssetPrice).toString();
+					if(tokenAddressToNameToUsd[baseAssetSymbol]?.[baseAssetSymbol]) {
+						tokenAddressToNameToUsd[baseAssetSymbol][baseAssetSymbol] = new BigNumber(tokenAddressToNameToUsd[baseAssetSymbol][baseAssetSymbol]).plus(baseAssetAmount).toString();
+					} else {
+						if(!tokenAddressToNameToUsd[baseAssetSymbol]) {
+							tokenAddressToNameToUsd[baseAssetSymbol] = {};
+							tokenAddressToNameToUsd[baseAssetSymbol][baseAssetSymbol] = baseAssetAmount;
+						} else {
+							tokenAddressToNameToUsd[baseAssetSymbol][baseAssetSymbol] = new BigNumber(tokenAddressToNameToUsd[baseAssetSymbol][baseAssetSymbol]).plus(baseAssetAmount).toString();
+						}
+					}
+					tempUSD = new BigNumber(tempUSD).plus(baseAssetAmount).toString();
+				} else {
+					throw new Error("Unable to fetch baseAssetPrice");
+				}
+			}
+		}
+
+		let tokenAddressToNameToUsdSorted = Object.entries(tokenAddressToNameToUsd).map(entry => entry[1]).sort((a, b) => {
+			let aKey = Object.keys(a)[0]
+			let bKey = Object.keys(b)[0]
+			return new BigNumber(b[bKey]).minus(a[aKey]).toNumber();
+		})
+
+		console.log({
+			// addressToNetworkToLatestBlock,
+			// tokenAddressToNameToUsd,
+			tokenAddressToNameToUsdSorted,
+			// addressToMultichainBaseBalance,
+			totalUSD: tempUSD,
+			'timestamp': new Date().toISOString()
+		});
+		console.log(`Archive sync of successful, exec time: ${new Date().getTime() - startTime}ms, finished at ${new Date().toISOString()}`)
+
+	} catch (e) {
+		console.error("Could not complete sync, error: ", e);
+	}
+}
 
 const runFullSync = async (useTimestampUnix: number, startTime: number) => {
 
@@ -400,13 +552,21 @@ const runAccountValueSnapshots = async (useTimestampUnix: number, startTime: num
 
 }
 
-const fullSyncTracker = async () => {
-	let useTimestampUnix = Math.floor(new Date().setSeconds(0) / 1000);
-	let startTime = new Date().getTime();
-	runFullSync(useTimestampUnix, startTime);
-}
+// const archiveSync = async () => {
+// 	let useTimestampUnix = Math.floor(new Date().setSeconds(0) / 1000);
+// 	let startTime = new Date().getTime();
+// 	runArchiveSync(useTimestampUnix, startTime);
+// }
 
-fullSyncTracker();
+// archiveSync();
+
+// const fullSyncTracker = async () => {
+// 	let useTimestampUnix = Math.floor(new Date().setSeconds(0) / 1000);
+// 	let startTime = new Date().getTime();
+//  runFullSync(useTimestampUnix, startTime);
+// }
+
+// fullSyncTracker();
 
 // const runFullSyncTracker = new CronJob(
 // 	'0 */10 * * * *',
@@ -420,29 +580,29 @@ fullSyncTracker();
 
 // runFullSyncTracker.start();
 
-const snapSyncTracker = async () => {
-	let useTimestampUnix = Math.floor(new Date().setSeconds(0) / 1000);
-	let startTimePriceSync = new Date().getTime();
-	await runPriceSync(useTimestampUnix, startTimePriceSync);
-	await patchMissingCoingeckoIds();
-	let is10MinuteMark = (useTimestampUnix % 600) === 0;
-	if(is10MinuteMark) {
-		let startTimeValueSnapshot = new Date().getTime();
-		await runAccountValueSnapshots(useTimestampUnix, startTimeValueSnapshot);
-	}
-}
+// const snapSyncTracker = async () => {
+// 	let useTimestampUnix = Math.floor(new Date().setSeconds(0) / 1000);
+// 	let startTimePriceSync = new Date().getTime();
+// 	await runPriceSync(useTimestampUnix, startTimePriceSync);
+// 	await patchMissingCoingeckoIds();
+// 	let is10MinuteMark = (useTimestampUnix % 600) === 0;
+// 	if(is10MinuteMark) {
+// 		let startTimeValueSnapshot = new Date().getTime();
+// 		await runAccountValueSnapshots(useTimestampUnix, startTimeValueSnapshot);
+// 	}
+// }
 
-const runSnapSyncTracker = new CronJob(
-	'0 */1 * * * *',
-	function() {
-		snapSyncTracker();
-	},
-	null,
-	true,
-	'Etc/UTC'
-);
+// const runSnapSyncTracker = new CronJob(
+// 	'0 */1 * * * *',
+// 	function() {
+// 		snapSyncTracker();
+// 	},
+// 	null,
+// 	true,
+// 	'Etc/UTC'
+// );
 
-runSnapSyncTracker.start();
+// runSnapSyncTracker.start();
 
 export const EthersProviderEthereum = new providers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY_ETHEREUM}`);
 // export const EthersProviderEthereum = new providers.AlchemyWebSocketProvider("homestead", ALCHEMY_API_KEY_ETHEREUM);

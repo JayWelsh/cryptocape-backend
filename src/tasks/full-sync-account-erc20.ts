@@ -45,7 +45,7 @@ interface ITokenAddressToBalance {
 
 let maxRetries = 3;
 
-const getAllAccountTransactionsERC20 = async (
+export const getAllAccountTransactionsERC20 = async (
   account: string,
   network: string,
   startBlock: string = "0",
@@ -100,7 +100,7 @@ const getAllAccountTransactionsERC20 = async (
   return [];
 }
 
-const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC20[], account: string, network: string) => {
+export const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC20[], account: string, network: string) => {
  
   let tokenAddressToBalance : ITokenAddressToBalance = {};
   let tokenAddressToZeroBalance : ITokenAddressToBalance = {};
@@ -135,6 +135,7 @@ const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC2
       tokenAddressToBalance[contractAddress] = {
         balance: "0",
         latestBlock: blockNumber,
+        earliestBlock: blockNumber,
         tokenInfo: {
           address: contractAddress,
           symbol: tokenSymbol,
@@ -144,8 +145,13 @@ const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC2
           network: network,
         }
       };
-    } else if(new BigNumber(blockNumber).isGreaterThan(tokenAddressToBalance[contractAddress].latestBlock)) {
-      tokenAddressToBalance[contractAddress].latestBlock = blockNumber;
+    } else {
+      if(new BigNumber(blockNumber).isGreaterThan(tokenAddressToBalance[contractAddress].latestBlock)) {
+        tokenAddressToBalance[contractAddress].latestBlock = blockNumber;
+      }
+      if(new BigNumber(blockNumber).isLessThan(tokenAddressToBalance[contractAddress].earliestBlock)) {
+        tokenAddressToBalance[contractAddress].earliestBlock = blockNumber;
+      }
     }
 
     if(to === from) {
@@ -205,7 +211,7 @@ export const fullSyncAccountBalancesERC20 = async (useTimestampUnix: number, sta
 
   try {
 
-    // let latestBlockNumber = await getLatestBlockNumber();
+    // let latestBlockNumber = await getLatestBlockNumber(network);
 
     if(debugMode) {
       console.log(`Full syncing ${address} on ${network}`);

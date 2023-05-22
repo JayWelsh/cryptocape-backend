@@ -39,6 +39,7 @@ export interface IToken {
 export interface IBalanceEntry {
   tokenInfo: IToken
   latestBlock: string
+  earliestBlock: string
   balance: string
 }
 

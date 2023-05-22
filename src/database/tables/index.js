@@ -9,6 +9,7 @@ const BUNDLE_CONTENT_TABLE = 'bundle_content';
 const NETWORK_TABLE = 'network';
 const SYNC_TRACK_TABLE = 'sync_track';
 const RESYNC_TRACK_TABLE = 'resync_track';
+const ERC20_TRANSFER_EVENT_TABLE = 'erc20_transfer_event';
 
 module.exports = {
   ACCOUNT_TABLE,
@@ -22,4 +23,5 @@ module.exports = {
   NETWORK_TABLE,
   SYNC_TRACK_TABLE,
   RESYNC_TRACK_TABLE,
+  ERC20_TRANSFER_EVENT_TABLE,
 }

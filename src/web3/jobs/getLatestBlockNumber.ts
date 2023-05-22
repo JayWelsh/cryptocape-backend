@@ -2,10 +2,22 @@ import {
   EthersProviderEthereum,
 } from "../../app";
 
-export const getLatestBlockNumber = async () => {
-  
-  let blockNumber = await EthersProviderEthereum.getBlockNumber();
+import {
+  getNetworkProvider,
+} from '../utils';
 
-  return blockNumber;
+export const getLatestBlockNumber = async (network: string) => {
+
+  let provider = getNetworkProvider(network);
+
+  if(provider) {
+  
+    let blockNumber = await provider.getBlockNumber();
+
+    return blockNumber;
+
+  }
+
+  return 0;
   
 }
