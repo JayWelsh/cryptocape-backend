@@ -78,13 +78,17 @@ const getAllAccountTransactionsERC20 = async (
       );
       let message = response?.data?.message;
       let data = response?.data?.result;
-      let additionalResults: IEtherscanTxERC20[] = [];
-      if(data && data.length > 0) {
-        if(data.length === pageSize) {
-          additionalResults = await getAllAccountTransactionsERC20(account, network, startBlock, page + 1, pageSize, results, retryCount);
+      if(typeof data === 'object') {
+        let additionalResults: IEtherscanTxERC20[] = [];
+        if(data && data.length > 0) {
+          if(data.length === pageSize) {
+            additionalResults = await getAllAccountTransactionsERC20(account, network, startBlock, page + 1, pageSize, results, retryCount);
+          }
         }
+        return [...data, ...additionalResults];
+      } else {
+        throw new Error(`API Key Limit Reached: ${data}`);
       }
-      return [...data, ...additionalResults];
     } else {
       return [];
     }
@@ -105,6 +109,8 @@ const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC2
   let tokenAddressToBalance : ITokenAddressToBalance = {};
   let tokenAddressToZeroBalance : ITokenAddressToBalance = {};
 
+  console.log({transactions})
+
   for(let transaction of transactions) {
 
     let {
@@ -117,6 +123,15 @@ const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC2
       from,
       blockNumber,
     } = transaction;
+
+    // console.log({contractAddress,
+    //   tokenSymbol,
+    //   tokenName,
+    //   tokenDecimal,
+    //   value,
+    //   to,
+    //   from,
+    //   blockNumber})
 
     contractAddress = utils.getAddress(contractAddress);
     to = utils.getAddress(to);
