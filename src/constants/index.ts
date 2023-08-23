@@ -41,4 +41,4 @@ export const baseAssetSymbolToCoingeckoId: {[key: string]: string} = {
   "CANTO": "canto",
 }
 
-export const debugMode = false;
+export const debugMode = true;
