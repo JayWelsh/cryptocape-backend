@@ -84,6 +84,7 @@ Model.knex(knex);
 const app = express();
 const port = process.env.PORT || 8420;
 
+//@ts-ignore
 app.use(cors(corsOptions));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -289,33 +290,35 @@ const runPriceSync = async (useTimestampUnix: number, startTime: number) => {
 			// Get non-base asset values
 			let nonBaseAssetQueryString = nonBaseAssetsOnNetwork.map((item: IToken) => item.address).join(',');
 			let coingeckoNetwork = networkToCoingeckoId[networkName];
-			let assetPrices = await fetchCoingeckoPrices(nonBaseAssetQueryString, coingeckoNetwork);
-			for(let [assetAddress, assetPrice] of Object.entries(assetPrices)) {
+			if(nonBaseAssetQueryString?.length > 0) {
+				let assetPrices = await fetchCoingeckoPrices(nonBaseAssetQueryString, coingeckoNetwork);
+				for(let [assetAddress, assetPrice] of Object.entries(assetPrices)) {
 
-				if(new BigNumber(assetPrice?.usd).isGreaterThan(0)) {
-					await AssetRepository.updateLastPriceOfAsset(assetAddress, assetPrice?.usd);
-				} else {
-					await AssetRepository.updateLastPriceOfAsset(assetAddress, "0");
+					if(new BigNumber(assetPrice?.usd).isGreaterThan(0)) {
+						await AssetRepository.updateLastPriceOfAsset(assetAddress, assetPrice?.usd);
+					} else {
+						await AssetRepository.updateLastPriceOfAsset(assetAddress, "0");
+					}
+
+					if(new BigNumber(assetPrice?.usd_24h_vol).isGreaterThan(0)) {
+						await AssetRepository.update24HrVolumeOfAsset(assetAddress, assetPrice?.usd_24h_vol);
+					} else {
+						await AssetRepository.update24HrVolumeOfAsset(assetAddress, "0");
+					}
+
+					if(new BigNumber(assetPrice?.usd_market_cap).isGreaterThan(0)) {
+						await AssetRepository.updateMarketCapOfAsset(assetAddress, assetPrice?.usd_market_cap);
+					} else {
+						await AssetRepository.updateMarketCapOfAsset(assetAddress, "0");
+					}
+
+					if(!(new BigNumber(assetPrice?.usd_24h_change).isNaN())) {
+						await AssetRepository.update24HrChangePercentOfAsset(assetAddress, assetPrice?.usd_24h_change);
+					} else {
+						await AssetRepository.update24HrChangePercentOfAsset(assetAddress, "0");
+					}
+
 				}
-
-				if(new BigNumber(assetPrice?.usd_24h_vol).isGreaterThan(0)) {
-					await AssetRepository.update24HrVolumeOfAsset(assetAddress, assetPrice?.usd_24h_vol);
-				} else {
-					await AssetRepository.update24HrVolumeOfAsset(assetAddress, "0");
-				}
-
-				if(new BigNumber(assetPrice?.usd_market_cap).isGreaterThan(0)) {
-					await AssetRepository.updateMarketCapOfAsset(assetAddress, assetPrice?.usd_market_cap);
-				} else {
-					await AssetRepository.updateMarketCapOfAsset(assetAddress, "0");
-				}
-
-				if(!(new BigNumber(assetPrice?.usd_24h_change).isNaN())) {
-					await AssetRepository.update24HrChangePercentOfAsset(assetAddress, assetPrice?.usd_24h_change);
-				} else {
-					await AssetRepository.update24HrChangePercentOfAsset(assetAddress, "0");
-				}
-
 			}
 
 			// await sleep(1000);

@@ -109,8 +109,6 @@ const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC2
   let tokenAddressToBalance : ITokenAddressToBalance = {};
   let tokenAddressToZeroBalance : ITokenAddressToBalance = {};
 
-  console.log({transactions})
-
   for(let transaction of transactions) {
 
     let {
@@ -123,15 +121,6 @@ const parseTransactionsIntoBalancesERC20 = async (transactions: IEtherscanTxERC2
       from,
       blockNumber,
     } = transaction;
-
-    // console.log({contractAddress,
-    //   tokenSymbol,
-    //   tokenName,
-    //   tokenDecimal,
-    //   value,
-    //   to,
-    //   from,
-    //   blockNumber})
 
     contractAddress = utils.getAddress(contractAddress);
     to = utils.getAddress(to);

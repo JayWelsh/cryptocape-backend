@@ -19,6 +19,7 @@ export const networkToCoingeckoId: {[key: string]: string} = {
   "ethereum": "ethereum",
   "optimism": "optimistic-ethereum",
   "canto": "canto",
+  "celestia": "celestia",
 }
 
 export const networkToBaseAssetId: {[key: string]: string} = {
@@ -26,6 +27,7 @@ export const networkToBaseAssetId: {[key: string]: string} = {
   "ethereum": "ethereum",
   "optimism": "optimism",
   "canto": "canto",
+  "celestia": "celestia",
 }
 
 export const baseAssetIdToSymbol: {[key: string]: string} = {
@@ -33,12 +35,14 @@ export const baseAssetIdToSymbol: {[key: string]: string} = {
   "ethereum": "ETH",
   "optimism": "OP",
   "canto": "CANTO",
+  "celestia": "TIA",
 }
 
 export const baseAssetSymbolToCoingeckoId: {[key: string]: string} = {
   "ETH": "ethereum",
   "OP": "optimism",
   "CANTO": "canto",
+  "TIA": "celestia",
 }
 
 export const debugMode = true;
