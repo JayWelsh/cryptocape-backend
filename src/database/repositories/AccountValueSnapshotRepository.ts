@@ -15,6 +15,14 @@ class AccountValueSnapshotRepository extends BaseRepository {
 
     return this.parserResult(result);
   }
+
+  async getSnapshotHistoryByAddresses(accounts: string[]) {
+    const result = await this.model.query().where(function (this: QueryBuilder<AccountValueSnapshotModel>) {
+      this.whereIn('holder_address', accounts);
+    }).orderBy('timestamp', 'ASC');
+
+    return this.parserResult(result);
+  }
 }
 
 export default new AccountValueSnapshotRepository()

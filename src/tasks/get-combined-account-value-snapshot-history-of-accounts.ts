@@ -15,23 +15,21 @@ export const getCombinedValueBreakdownTimeseries = async (addressesArray: string
   let timeseries : ITimeseries[] = [];
   let timestampToTimeseries : {[key: string]: ITimeseries} = {};
 
-  for (let address of addressesArray) {
-    let accountValueSnapshots = await AccountValueSnapshotRepository.getSnapshotHistory(address);
+  let accountValueSnapshots = await AccountValueSnapshotRepository.getSnapshotHistoryByAddresses(addressesArray);
 
-    for(let accountValueSnapshot of accountValueSnapshots) {
-      let {
-        value_usd,
-        timestamp,
-      } = accountValueSnapshot;
-      if(new BigNumber(value_usd).isGreaterThan(1)) {
-        if(timestampToTimeseries[timestamp]) {
-          timestampToTimeseries[timestamp].value = new BigNumber(timestampToTimeseries[timestamp].value).plus(value_usd).toString();
-        } else {
-          timestampToTimeseries[timestamp] = {
-            value: new BigNumber(value_usd).toString(),
-            timestamp,
-          };
-        }
+  for(let accountValueSnapshot of accountValueSnapshots) {
+    let {
+      value_usd,
+      timestamp,
+    } = accountValueSnapshot;
+    if(new BigNumber(value_usd).isGreaterThan(1)) {
+      if(timestampToTimeseries[timestamp]) {
+        timestampToTimeseries[timestamp].value = new BigNumber(timestampToTimeseries[timestamp].value).plus(value_usd).toString();
+      } else {
+        timestampToTimeseries[timestamp] = {
+          value: new BigNumber(value_usd).toString(),
+          timestamp,
+        };
       }
     }
   }
