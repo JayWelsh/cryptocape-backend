@@ -34,7 +34,13 @@ import {
 	AssetRepository,
 	NetworkRepository,
 	AccountValueBreakdownSnapshotRepository,
+	AccountValueBreakdownSnapshotHourlyRepository,
+	AccountValueBreakdownSnapshotDailyRepository,
+	AccountValueBreakdownSnapshotArchiveRepository,
 	AccountValueSnapshotRepository,
+	AccountValueSnapshotHourlyRepository,
+	AccountValueSnapshotDailyRepository,
+	AccountValueSnapshotArchiveRepository,
 } from "./database/repositories";
 
 import {
@@ -384,6 +390,30 @@ const runAccountValueSnapshots = async (useTimestampUnix: number, startTime: num
 				timestamp: useTimestampPostgres,
 			})
 
+			await AccountValueSnapshotArchiveRepository.create({
+				holder_address: address,
+				value_usd: total,
+				timestamp: useTimestampPostgres,
+			})
+
+			if((useTimestampUnix % (60*60)) === 0) {
+				// is hourly moment
+				await AccountValueSnapshotHourlyRepository.create({
+					holder_address: address,
+					value_usd: total,
+					timestamp: useTimestampPostgres,
+				})
+			}
+
+			if((useTimestampUnix % (60*60*24)) === 0) {
+				// is daily moment
+				await AccountValueSnapshotDailyRepository.create({
+					holder_address: address,
+					value_usd: total,
+					timestamp: useTimestampPostgres,
+				})
+			}
+
 			for(let [assetAddress, tokenInfo] of Object.entries(assetAddressToValue)) {
 				await AccountValueBreakdownSnapshotRepository.create({
 					asset_address: assetAddress,
@@ -391,6 +421,33 @@ const runAccountValueSnapshots = async (useTimestampUnix: number, startTime: num
 					value_usd: tokenInfo.value,
 					timestamp: useTimestampPostgres,
 				})
+
+				await AccountValueBreakdownSnapshotArchiveRepository.create({
+					asset_address: assetAddress,
+					holder_address: address,
+					value_usd: tokenInfo.value,
+					timestamp: useTimestampPostgres,
+				})
+
+				if((useTimestampUnix % (60*60)) === 0) {
+					// is hourly moment
+					await AccountValueBreakdownSnapshotHourlyRepository.create({
+						asset_address: assetAddress,
+						holder_address: address,
+						value_usd: tokenInfo.value,
+						timestamp: useTimestampPostgres,
+					})
+				}
+	
+				if((useTimestampUnix % (60*60*24)) === 0) {
+					// is daily moment
+					await AccountValueBreakdownSnapshotDailyRepository.create({
+						asset_address: assetAddress,
+						holder_address: address,
+						value_usd: tokenInfo.value,
+						timestamp: useTimestampPostgres,
+					})
+				}
 			}
 			
 		}
@@ -449,22 +506,16 @@ runSnapSyncTracker.start();
 
 export const EthersProviderEthereum = new providers.JsonRpcProvider(`https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY_ETHEREUM}`);
 // export const EthersProviderEthereum = new providers.AlchemyWebSocketProvider("homestead", ALCHEMY_API_KEY_ETHEREUM);
-export const MulticallProviderEthereum = new Provider(EthersProviderEthereum);
+// export const MulticallProviderEthereum = new Provider(EthersProviderEthereum);
 export const MulticallProviderEthereumLib2 = new Multicall({ ethersProvider: EthersProviderEthereum, tryAggregate: true });
 
-MulticallProviderEthereum.init();
-
-export const EthersProviderOptimism = new providers.AlchemyWebSocketProvider("optimism", ALCHEMY_API_KEY_OPTIMISM);
-export const MulticallProviderOptimism = new Provider(EthersProviderOptimism, 10);
+export const EthersProviderOptimism = new providers.JsonRpcProvider(`https://opt-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY_OPTIMISM}`);
+// export const MulticallProviderOptimism = new Provider(EthersProviderOptimism, 10);
 export const MulticallProviderOptimismLib2 = new Multicall({ ethersProvider: EthersProviderOptimism, tryAggregate: true });
 
-MulticallProviderOptimism.init();
-
-export const EthersProviderArbitrum = new providers.AlchemyWebSocketProvider("arbitrum", ALCHEMY_API_KEY_ARBITRUM);
-export const MulticallProviderArbitrum = new Provider(EthersProviderArbitrum, 42161);
+export const EthersProviderArbitrum = new providers.JsonRpcProvider(`https://arb-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY_ARBITRUM}`);
+// export const MulticallProviderArbitrum = new Provider(EthersProviderArbitrum, 42161);
 export const MulticallProviderArbitrumLib2 = new Multicall({ ethersProvider: EthersProviderArbitrum, tryAggregate: true });
-
-MulticallProviderArbitrum.init();
 
 // const runFullSyncTracker = new CronJob(
 // 	`20 */${contractEventIndexerPeriodMinutes} * * * *`, // runs at 20 seconds past the minute on contractEventIndexerPeriodMinutes to offset it from the minutely runner which usually takes around 5-10 seconds

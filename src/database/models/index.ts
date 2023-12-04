@@ -6,7 +6,13 @@ import AccountModel from './AccountModel';
 
 // SNAPSHOTS
 import AccountValueSnapshotModel from './AccountValueSnapshotModel';
+import AccountValueSnapshotHourlyModel from './AccountValueSnapshotHourlyModel';
+import AccountValueSnapshotDailyModel from './AccountValueSnapshotDailyModel';
+import AccountValueSnapshotArchiveModel from './AccountValueSnapshotArchiveModel';
 import AccountValueBreakdownSnapshotModel from './AccountValueBreakdownSnapshotModel';
+import AccountValueBreakdownSnapshotHourlyModel from './AccountValueBreakdownSnapshotHourlyModel';
+import AccountValueBreakdownSnapshotDailyModel from './AccountValueBreakdownSnapshotDailyModel';
+import AccountValueBreakdownSnapshotArchiveModel from './AccountValueBreakdownSnapshotArchiveModel';
 
 // BALANCES
 import BalanceModel from './BalanceModel';
@@ -27,7 +33,13 @@ export {
   AssetModel,
   AccountModel,
   AccountValueSnapshotModel,
+  AccountValueSnapshotHourlyModel,
+  AccountValueSnapshotDailyModel,
+  AccountValueSnapshotArchiveModel,
   AccountValueBreakdownSnapshotModel,
+  AccountValueBreakdownSnapshotHourlyModel,
+  AccountValueBreakdownSnapshotDailyModel,
+  AccountValueBreakdownSnapshotArchiveModel,
   BalanceModel,
   BalanceShimModel,
   BundleAdminModel,

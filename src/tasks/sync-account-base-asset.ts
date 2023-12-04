@@ -22,9 +22,6 @@ import {
   BalanceRepository,
 } from '../database/repositories';
 
-import {
-  getBalanceOfERC20,
-} from '../web3/jobs'
 import e from 'express';
 
 import {

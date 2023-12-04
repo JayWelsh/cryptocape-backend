@@ -19,7 +19,7 @@ import ERC20ABI from '../abis/ERC20ABI.json';
 
 import {
   queryFilterRetryOnFailure,
-  multicallProviderRetryOnFailure,
+  // multicallProviderRetryOnFailure,
   multicallProviderRetryOnFailureLib2,
 } from '../utils';
 
@@ -39,46 +39,46 @@ interface IAllSiloAssetBalances {
   tokenAddress: string
 }
 
-export const getBalanceOfERC20 = async (
-  assetAddresses: string[],
-  holderAddress: string,
-  network: string,
-) => {
+// export const getBalanceOfERC20 = async (
+//   assetAddresses: string[],
+//   holderAddress: string,
+//   network: string,
+// ) => {
 
-  let batches = sliceArrayIntoChunks(assetAddresses, 5);
+//   let batches = sliceArrayIntoChunks(assetAddresses, 5);
 
-  console.log({batches});
+//   console.log({batches});
 
-  let allBalancesERC20 : any[] = [];
+//   let allBalancesERC20 : any[] = [];
 
-  for(let batch of batches) {
+//   for(let batch of batches) {
 
-    const tokenContracts = batch.map(tokenAddress => {
-      let contract = new MulticallContract(tokenAddress, ERC20ABI);
-      return contract;
-    })
+//     const tokenContracts = batch.map(tokenAddress => {
+//       let contract = new MulticallContract(tokenAddress, ERC20ABI);
+//       return contract;
+//     })
 
-    let batchOfBalances = await multicallProviderRetryOnFailure(tokenContracts.map((contract, index) => {
-      return contract.balanceOf(holderAddress)
-    }), network, 'address ERC-20 balance');
+//     let batchOfBalances = await multicallProviderRetryOnFailure(tokenContracts.map((contract, index) => {
+//       return contract.balanceOf(holderAddress)
+//     }), network, 'address ERC-20 balance');
 
-    allBalancesERC20 = [...allBalancesERC20, ...batchOfBalances];
+//     allBalancesERC20 = [...allBalancesERC20, ...batchOfBalances];
 
-  }
+//   }
 
-  console.log({assetAddressesLength: assetAddresses.length, allBalancesERC20Length: allBalancesERC20.length});
+//   console.log({assetAddressesLength: assetAddresses.length, allBalancesERC20Length: allBalancesERC20.length});
 
-  let index = 0;
-  let results : {[key: string]: string} = {};
-  for(let balance of allBalancesERC20) {
-    let tokenAddress = assetAddresses[index];
-    results[tokenAddress] = balance ? balance.toString() : "0";
-    index++;
-  }
+//   let index = 0;
+//   let results : {[key: string]: string} = {};
+//   for(let balance of allBalancesERC20) {
+//     let tokenAddress = assetAddresses[index];
+//     results[tokenAddress] = balance ? balance.toString() : "0";
+//     index++;
+//   }
 
-  return results;
+//   return results;
 
-}
+// }
 
 export const getBalanceOfERC20Lib2 = async (
   assetAddresses: string[],

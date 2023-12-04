@@ -19,7 +19,7 @@ import ERC20ABI from '../abis/ERC20ABI.json';
 
 import {
   queryFilterRetryOnFailure,
-  multicallProviderRetryOnFailure,
+  // multicallProviderRetryOnFailure,
   multicallProviderRetryOnFailureLib2,
 } from '../utils';
 

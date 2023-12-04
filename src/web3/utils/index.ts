@@ -24,13 +24,13 @@ BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 
 import {
   EthersProviderEthereum,
-  MulticallProviderEthereum,
+  // MulticallProviderEthereum,
   MulticallProviderEthereumLib2,
   EthersProviderOptimism,
-  MulticallProviderOptimism,
+  // MulticallProviderOptimism,
   MulticallProviderOptimismLib2,
   EthersProviderArbitrum,
-  MulticallProviderArbitrum,
+  // MulticallProviderArbitrum,
   MulticallProviderArbitrumLib2,
 } from "../../app";
 
@@ -102,44 +102,44 @@ export const queryFilterRetryOnFailure = async (
   }
 }
 
-export const multicallProviderRetryOnFailure = async (
-  calls: any[],
-  network: string,
-  meta: string,
-  retryCount?: number,
-  retryMax?: number,
-): Promise<Array<any>> => {
-  if(!retryMax) {
-    retryMax = 10;
-  }
-  if(!retryCount) {
-    retryCount = 0;
-  }
-  try {
-    if(network === 'ethereum') {
-      const [...results] = await MulticallProviderEthereum.all(calls);
-      return results;
-    } else if (network === 'optimism') {
-      const [...results] = await MulticallProviderOptimism.all(calls);
-      return results;
-    } else if (network === 'arbitrum') {
-      const [...results] = await MulticallProviderArbitrum.all(calls);
-      return results;
-    }
-    return [];
-  } catch (e) {
-    retryCount++;
-    if(retryCount <= retryMax) {
-      console.error(`Multicall failed, starting retry #${retryCount} (meta: ${meta})`);
-      let randomDelay = 1000 + Math.floor(Math.random() * 1000);
-      await sleep(randomDelay);
-      return await multicallProviderRetryOnFailure(calls, network, meta, retryCount, retryMax);
-    } else {
-      console.error(`Unable to complete multicallProviderRetryOnFailure after max retries (meta: ${meta})`);
-      return Array.from({length: calls.length});
-    }
-  }
-}
+// export const multicallProviderRetryOnFailure = async (
+//   calls: any[],
+//   network: string,
+//   meta: string,
+//   retryCount?: number,
+//   retryMax?: number,
+// ): Promise<Array<any>> => {
+//   if(!retryMax) {
+//     retryMax = 10;
+//   }
+//   if(!retryCount) {
+//     retryCount = 0;
+//   }
+//   try {
+//     if(network === 'ethereum') {
+//       const [...results] = await MulticallProviderEthereum.all(calls);
+//       return results;
+//     } else if (network === 'optimism') {
+//       const [...results] = await MulticallProviderOptimism.all(calls);
+//       return results;
+//     } else if (network === 'arbitrum') {
+//       const [...results] = await MulticallProviderArbitrum.all(calls);
+//       return results;
+//     }
+//     return [];
+//   } catch (e) {
+//     retryCount++;
+//     if(retryCount <= retryMax) {
+//       console.error(`Multicall failed, starting retry #${retryCount} (meta: ${meta})`);
+//       let randomDelay = 1000 + Math.floor(Math.random() * 1000);
+//       await sleep(randomDelay);
+//       return await multicallProviderRetryOnFailure(calls, network, meta, retryCount, retryMax);
+//     } else {
+//       console.error(`Unable to complete multicallProviderRetryOnFailure after max retries (meta: ${meta})`);
+//       return Array.from({length: calls.length});
+//     }
+//   }
+// }
 
 export const multicallProviderRetryOnFailureLib2 = async (
   calls: any[],
@@ -174,7 +174,7 @@ export const multicallProviderRetryOnFailureLib2 = async (
       await sleep(randomDelay);
       return await multicallProviderRetryOnFailureLib2(calls, network, meta, retryCount, retryMax);
     } else {
-      console.error(`Unable to complete multicallProviderRetryOnFailure after max retries (meta: ${meta})`);
+      console.error(`Unable to complete multicallProviderRetryOnFailure after max retries (meta: ${meta})`, e);
       return {results: {}, blockNumber: 0};
     }
   }

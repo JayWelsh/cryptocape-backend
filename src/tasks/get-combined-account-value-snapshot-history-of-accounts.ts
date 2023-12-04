@@ -3,6 +3,7 @@ import { utils } from "ethers";
 
 import {
   AccountValueSnapshotRepository,
+  AccountValueSnapshotHourlyRepository,
 } from '../database/repositories';
 
 import {
@@ -14,15 +15,19 @@ BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 export const getCombinedValueBreakdownTimeseries = async (addressesArray: string[]) => {
   let timeseries : ITimeseries[] = [];
   let timestampToTimeseries : {[key: string]: ITimeseries} = {};
+  let minutelyTimestamps = [];
 
-  let accountValueSnapshots = await AccountValueSnapshotRepository.getSnapshotHistoryByAddresses(addressesArray);
+  let accountValueSnapshotsMinutely = await AccountValueSnapshotRepository.getSnapshotHistoryByAddresses(addressesArray);
 
-  for(let accountValueSnapshot of accountValueSnapshots) {
+  for(let accountValueSnapshot of accountValueSnapshotsMinutely) {
     let {
       value_usd,
       timestamp,
     } = accountValueSnapshot;
     if(new BigNumber(value_usd).isGreaterThan(1)) {
+      if(minutelyTimestamps.indexOf(timestamp) === -1) {
+        minutelyTimestamps.push(timestamp);
+      }
       if(timestampToTimeseries[timestamp]) {
         timestampToTimeseries[timestamp].value = new BigNumber(timestampToTimeseries[timestamp].value).plus(value_usd).toString();
       } else {
@@ -30,6 +35,27 @@ export const getCombinedValueBreakdownTimeseries = async (addressesArray: string
           value: new BigNumber(value_usd).toString(),
           timestamp,
         };
+      }
+    }
+  }
+
+  let accountValueSnapshotsHourly = await AccountValueSnapshotHourlyRepository.getSnapshotHistoryByAddresses(addressesArray);
+
+  for(let accountValueSnapshot of accountValueSnapshotsHourly) {
+    let {
+      value_usd,
+      timestamp,
+    } = accountValueSnapshot;
+    if(minutelyTimestamps.indexOf(timestamp) === -1) {
+      if(new BigNumber(value_usd).isGreaterThan(1)) {
+        if(timestampToTimeseries[timestamp]) {
+          timestampToTimeseries[timestamp].value = new BigNumber(timestampToTimeseries[timestamp].value).plus(value_usd).toString();
+        } else {
+          timestampToTimeseries[timestamp] = {
+            value: new BigNumber(value_usd).toString(),
+            timestamp,
+          };
+        }
       }
     }
   }
