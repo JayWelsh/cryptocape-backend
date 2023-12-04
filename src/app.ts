@@ -3,7 +3,7 @@ import { Provider } from 'ethers-multicall';
 import cors from "cors";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
-import { Model } from "objection";
+import { Model, raw } from "objection";
 import Knex from "knex";
 import {CronJob} from "cron";
 import { providers, utils} from "ethers";
@@ -451,6 +451,12 @@ const runAccountValueSnapshots = async (useTimestampUnix: number, startTime: num
 			}
 			
 		}
+
+		// delete expired records
+		let maxMinutes = 10080; // 7 days
+		let deletedExpiredRateRecordCount = await AccountValueSnapshotRepository.query().delete().where(raw(`timestamp < now() - interval '${maxMinutes} minutes'`));
+
+		console.log(`deleted ${deletedExpiredRateRecordCount} expired AccountValueSnapshotRepository records`);
 
 		console.log(`Value breakdown snapshot successful, exec time: ${new Date().getTime() - startTime}ms, finished at ${new Date().toISOString()}`)
 
