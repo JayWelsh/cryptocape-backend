@@ -24,10 +24,10 @@ export const getCombinedValueBreakdownTimeseries = async (addressesArray: string
       value_usd,
       timestamp,
     } = accountValueSnapshot;
+    if(minutelyTimestamps.indexOf(timestamp.getTime()) === -1) {
+      minutelyTimestamps.push(timestamp.getTime());
+    }
     if(new BigNumber(value_usd).isGreaterThan(1)) {
-      if(minutelyTimestamps.indexOf(timestamp) === -1) {
-        minutelyTimestamps.push(timestamp);
-      }
       if(timestampToTimeseries[timestamp]) {
         timestampToTimeseries[timestamp].value = new BigNumber(timestampToTimeseries[timestamp].value).plus(value_usd).toString();
       } else {
@@ -39,26 +39,26 @@ export const getCombinedValueBreakdownTimeseries = async (addressesArray: string
     }
   }
 
-  // let accountValueSnapshotsHourly = await AccountValueSnapshotHourlyRepository.getSnapshotHistoryByAddresses(addressesArray);
+  let accountValueSnapshotsHourly = await AccountValueSnapshotHourlyRepository.getSnapshotHistoryByAddresses(addressesArray);
 
-  // for(let accountValueSnapshot of accountValueSnapshotsHourly) {
-  //   let {
-  //     value_usd,
-  //     timestamp,
-  //   } = accountValueSnapshot;
-  //   if(minutelyTimestamps.indexOf(timestamp) === -1) {
-  //     if(new BigNumber(value_usd).isGreaterThan(1)) {
-  //       if(timestampToTimeseries[timestamp]) {
-  //         timestampToTimeseries[timestamp].value = new BigNumber(timestampToTimeseries[timestamp].value).plus(value_usd).toString();
-  //       } else {
-  //         timestampToTimeseries[timestamp] = {
-  //           value: new BigNumber(value_usd).toString(),
-  //           timestamp,
-  //         };
-  //       }
-  //     }
-  //   }
-  // }
+  for(let accountValueSnapshot of accountValueSnapshotsHourly) {
+    let {
+      value_usd,
+      timestamp,
+    } = accountValueSnapshot;
+    if(minutelyTimestamps.indexOf(timestamp.getTime()) === -1) {
+      if(new BigNumber(value_usd).isGreaterThan(1)) {
+        if(timestampToTimeseries[timestamp]) {
+          timestampToTimeseries[timestamp].value = new BigNumber(timestampToTimeseries[timestamp].value).plus(value_usd).toString();
+        } else {
+          timestampToTimeseries[timestamp] = {
+            value: new BigNumber(value_usd).toString(),
+            timestamp,
+          };
+        }
+      }
+    }
+  }
 
   for (let [timestamp, timestampToTimeseriesEntry] of Object.entries(timestampToTimeseries)) {
     timeseries.push(timestampToTimeseriesEntry);
