@@ -78,7 +78,7 @@ BigNumber.config({ EXPONENTIAL_AT: [-1e+9, 1e+9] });
 let contractEventIndexerPeriodMinutes = 2;
 
 let corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'https://cryptocape.com', 'https://beta.cryptocape.com', null, 'null', 'https://silo.observer'],
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'https://cryptocape.com', 'https://beta.cryptocape.com', null, 'null', 'https://silo.observer', 'https://rileydacruz.github.io'],
 }
 
 dotenv.config();
